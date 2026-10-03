@@ -124,11 +124,11 @@ const KipStorage = (function () {
 
   const COSMETICS = [
     { id: "nest-pillow", type: "nest", name: "Soft pillow", cost: 4, joyBonus: 6, desc: "A comfy cushion for the nest." },
-    { id: "nest-lantern", type: "nest", name: "Glow lantern", cost: 6, joyBonus: 8, desc: "Warm light for evening rest." },
-    { id: "nest-bloom", type: "nest", name: "Bloom ring", cost: 5, joyBonus: 7, desc: "Flowers circling the nest rim." },
+    { id: "nest-lantern", type: "nest", name: "Glow lantern", cost: 6, joyBonus: 8, desc: "A whimsical star lantern with a warm glow." },
+    { id: "nest-bloom", type: "nest", name: "Bloom ring", cost: 5, joyBonus: 7, desc: "A full garland of flowers around the nest rim." },
     { id: "acc-bow", type: "accessory", name: "Sunny bow", cost: 3, joyBonus: 5, desc: "A cheerful bow for your pet." },
-    { id: "acc-scarf", type: "accessory", name: "Leaf scarf", cost: 4, joyBonus: 6, desc: "A soft scarf for cool breezes." },
-    { id: "acc-hat", type: "accessory", name: "Cloud hat", cost: 5, joyBonus: 7, desc: "A tiny hat that looks like a puff." }
+    { id: "acc-scarf", type: "accessory", name: "Leaf necktie", cost: 4, joyBonus: 6, desc: "A real leaf-shaped tie with a tiny stem." },
+    { id: "acc-hat", type: "accessory", name: "Cloud hat", cost: 5, joyBonus: 7, desc: "A tiny fluffy cloud resting overhead." }
   ];
 
   function defaultData() {
@@ -289,3 +289,11 @@ const KipStorage = (function () {
     brandName
   };
 })();
+
+document.querySelectorAll("[data-reset-game]").forEach(function (button) {
+  button.addEventListener("click", function () {
+    if (!window.confirm("Reset all progress and start over?")) return;
+    localStorage.removeItem(KipStorage.KEY);
+    window.location.href = "index.html";
+  });
+});

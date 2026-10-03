@@ -33,6 +33,12 @@
   const memoryOpen = document.getElementById("memory-box-open");
   const memoryClose = document.getElementById("memory-close");
   const onboardTitle = document.getElementById("onboard-title");
+  const careEffect = document.getElementById("care-effect");
+  const growthModal = document.getElementById("growth-modal");
+  const growthReveal = document.getElementById("growth-reveal");
+  const growthTitle = document.getElementById("growth-title");
+  const growthCopy = document.getElementById("growth-copy");
+  const growthClose = document.getElementById("growth-close");
 
   const fills = {
     hunger: document.getElementById("fill-hunger"),
@@ -62,21 +68,29 @@
   function buildGrass() {
     if (!grassField || grassField.childElementCount) return;
     var i;
-    for (i = 0; i < 48; i++) {
+    for (i = 0; i < 96; i++) {
       const blade = document.createElement("span");
+      const depth = Math.random();
+      const scale = 1 - depth * 0.72;
       blade.className = "grass-tuft";
       blade.style.left = (Math.random() * 100) + "%";
-      blade.style.bottom = (Math.random() * 55) + "%";
+      blade.style.bottom = (depth * 97) + "%";
       blade.style.height = (18 + Math.random() * 28) + "px";
       blade.style.setProperty("--lean", ((Math.random() * 24) - 12) + "deg");
+      blade.style.setProperty("--scale", scale.toFixed(2));
       blade.style.setProperty("--shade", Math.random() > 0.5 ? "#3f7a45" : "#4f8f55");
+      blade.style.opacity = (0.48 + scale * 0.52).toFixed(2);
       grassField.appendChild(blade);
     }
-    for (i = 0; i < 14; i++) {
+    for (i = 0; i < 28; i++) {
       const flower = document.createElement("span");
+      const depth = Math.random();
+      const scale = 1 - depth * 0.7;
       flower.className = "meadow-flower";
       flower.style.left = (6 + Math.random() * 88) + "%";
-      flower.style.bottom = (8 + Math.random() * 42) + "%";
+      flower.style.bottom = (4 + depth * 92) + "%";
+      flower.style.setProperty("--scale", scale.toFixed(2));
+      flower.style.opacity = (0.58 + scale * 0.42).toFixed(2);
       flower.style.setProperty("--petal", ["#e8a08a", "#f0c15a", "#9ec9e0", "#f4d6e2"][i % 4]);
       grassField.appendChild(flower);
     }
@@ -157,11 +171,14 @@
       nestDecor.innerHTML = '<span class="decor-pillow" style="--item-color:' + colorForItem(data, KipStorage.getCosmetic("nest-pillow")) + '"></span>';
     } else if (data.equippedNest === "nest-lantern") {
       nestBed.classList.add("has-lantern");
-      nestDecor.innerHTML = '<span class="decor-lantern" style="--item-color:' + colorForItem(data, KipStorage.getCosmetic("nest-lantern")) + '"></span>';
+      nestDecor.innerHTML = '<span class="decor-lantern" style="--item-color:' + colorForItem(data, KipStorage.getCosmetic("nest-lantern")) + '"><i class="lantern-star">★</i><i class="lantern-tassel"></i></span>';
     } else if (data.equippedNest === "nest-bloom") {
       nestBed.classList.add("has-bloom");
-      nestDecor.innerHTML =
-        '<span class="decor-bloom b1" style="--item-color:' + colorForItem(data, KipStorage.getCosmetic("nest-bloom")) + '"></span><span class="decor-bloom b2" style="--item-color:' + colorForItem(data, KipStorage.getCosmetic("nest-bloom")) + '"></span><span class="decor-bloom b3" style="--item-color:' + colorForItem(data, KipStorage.getCosmetic("nest-bloom")) + '"></span>';
+      const bloomColor = colorForItem(data, KipStorage.getCosmetic("nest-bloom"));
+      const bloomPoints = [[4,42],[10,23],[23,9],[40,1],[58,0],[76,8],[89,23],[95,42],[84,62],[65,72],[36,72],[15,62]];
+      nestDecor.innerHTML = bloomPoints.map(function (point, index) {
+        return '<span class="decor-bloom" style="--item-color:' + bloomColor + ';left:' + point[0] + '%;top:' + point[1] + '%;--bloom-rotate:' + (index * 23) + 'deg"></span>';
+      }).join("");
     }
   }
 
@@ -259,19 +276,15 @@
 
     const mood = KipCreature.mood(live);
     wrap.classList.remove("is-happy", "is-sad", "is-glowing");
-    const mouth = host.querySelector(".creature-mouth");
     if (mood === "happy") {
       wrap.classList.add("is-glowing");
-      if (mouth) mouth.setAttribute("d", "M90 124 Q100 134 110 124");
     } else if (mood === "sad") {
       wrap.classList.add("is-sad");
-      if (mouth) mouth.setAttribute("d", "M90 130 Q100 122 110 130");
-    } else if (mouth) {
-      mouth.setAttribute("d", "M90 126 Q100 130 110 126");
     }
 
     document.querySelectorAll(".orbit-btn").forEach(function (btn) {
-      btn.disabled = (live.tokens || 0) < 1;
+      btn.disabled = false;
+      btn.title = (live.tokens || 0) < 1 ? "Needs 1 nest token — tap to learn how to earn one" : "Uses 1 nest token";
     });
   }
 
@@ -388,15 +401,29 @@
 
   document.querySelectorAll(".orbit-btn").forEach(function (btn) {
     btn.addEventListener("click", function () {
-      const result = KipCreature.care(btn.getAttribute("data-care"));
+      const action = btn.getAttribute("data-care");
+      const result = KipCreature.care(action);
       feedback.textContent = result.message;
       if (result.ok) {
         clearIdleClasses();
-        wrap.classList.add("is-happy");
+        wrap.classList.add("is-happy", "care-" + action);
+        careEffect.className = "care-effect effect-" + action + " is-active";
+        careEffect.textContent = action === "feed" ? "🍓  🍃  ✦" : action === "play" ? "★  ✦  ★" : action === "rest" ? "Z  z  ✦" : "✦  ✧  ✦";
         speechEl.textContent = result.speech;
-        window.setTimeout(function () { wrap.classList.remove("is-happy"); }, 700);
+        window.setTimeout(function () {
+          wrap.classList.remove("is-happy", "care-" + action);
+          careEffect.className = "care-effect";
+        }, 1000);
       }
       renderHabitat();
+      if (result.grew) {
+        const grown = KipStorage.load();
+        const age = grown.creature.age;
+        growthTitle.textContent = grown.petName + " grew into a " + age + "!";
+        growthReveal.innerHTML = KipCreature.petSvgMarkup(grown, "creature growth-creature");
+        growthCopy.textContent = "Their " + age + " form has been saved permanently in the Memory Box.";
+        window.setTimeout(function () { growthModal.hidden = false; }, 450);
+      }
       if (result.retired) {
         window.setTimeout(function () {
           showOnboarding("A life well lived—meet your next friend");
@@ -411,6 +438,7 @@
     memoryModal.hidden = false;
   });
   memoryClose.addEventListener("click", function () { memoryModal.hidden = true; });
+  growthClose.addEventListener("click", function () { growthModal.hidden = true; });
 
   const data = KipStorage.load();
   if (!data.onboarded) showOnboarding();

@@ -16,6 +16,7 @@
       <a href="index.html">Home</a>
       <a href="budget.html">Money Journal</a>
       <a href="world.html" aria-current="page" data-brand="world">World</a>
+      <button type="button" class="nav-reset" data-reset-game>Reset game</button>
     </nav>
     <div class="flower-badge" title="Flower currency">
       <span class="flower-icon" aria-hidden="true"></span>
@@ -30,6 +31,7 @@
       <p class="side-copy">Walk the paths. Finish a place lesson to open more of the map. Your pet follows you.</p>
 
       <button type="button" class="look-toggle" id="look-toggle" aria-expanded="false">Customize player <span>Open</span></button>
+      <button type="button" class="map-overview-toggle" id="map-overview-toggle" aria-pressed="false">Show full map overview</button>
       <div class="look-panel" id="look-panel" hidden>
         <h2>Your look</h2>
         <div class="avatar-preview" id="avatar-preview"></div>
@@ -40,30 +42,6 @@
             <option value="#c68642">Medium brown</option>
             <option value="#8d5524">Deep brown</option>
             <option value="#f5d0b0">Fair rose</option>
-          </select>
-        </label>
-        <label>Hair color
-          <select id="avatar-hair">
-            <option value="#3b2a1f">Dark brown</option>
-            <option value="#6b3e26">Chestnut</option>
-            <option value="#1a1a1a">Black</option>
-            <option value="#c9a227">Honey</option>
-            <option value="#d4533b">Copper</option>
-          </select>
-        </label>
-        <label>Bangs
-          <select id="avatar-bangs">
-            <option value="side">Side sweep</option>
-            <option value="full">Full bangs</option>
-            <option value="curtain">Curtain bangs</option>
-          </select>
-        </label>
-        <label>Back hair
-          <select id="avatar-back">
-            <option value="short">Short</option>
-            <option value="long">Long</option>
-            <option value="pony">Ponytail</option>
-            <option value="afro">Afro</option>
           </select>
         </label>
         <label>Shirt
@@ -82,6 +60,30 @@
             <option value="#2c5282">Denim</option>
           </select>
         </label>
+        <label>Hair color
+          <select id="avatar-hair">
+            <option value="#3b2a1f">Dark brown</option>
+            <option value="#6b3e26">Chestnut</option>
+            <option value="#1a1a1a">Black</option>
+            <option value="#c9a227">Honey</option>
+            <option value="#d4533b">Copper</option>
+          </select>
+        </label>
+        <label>Back hair
+          <select id="avatar-back">
+            <option value="short">Short</option>
+            <option value="long">Long</option>
+            <option value="pony">Ponytail</option>
+            <option value="afro">Afro</option>
+          </select>
+        </label>
+        <label>Bangs
+          <select id="avatar-bangs">
+            <option value="side">Side sweep</option>
+            <option value="full">Full bangs</option>
+            <option value="curtain">Curtain bangs</option>
+          </select>
+        </label>
         <button type="button" class="btn btn-soft" id="save-look">Save look</button>
       </div>
 
@@ -89,33 +91,65 @@
       <p class="world-status" id="world-status" aria-live="polite"></p>
     </aside>
 
-    <section class="map-frame">
+    <section class="map-frame" id="map-frame">
       <div class="map-viewport" id="map-viewport">
         <div class="world-map large-map" id="world-map">
           <div class="map-ground-big"></div>
           <div class="map-pond"></div>
-          <div class="map-creek"></div>
-          <svg class="map-paths" viewBox="0 0 1800 1300" aria-hidden="true">
-            <path d="M220 280 C340 340 480 380 600 420 C720 460 780 500 740 540 C700 580 560 620 480 840 C420 960 820 1000 1140 1040 C1320 1060 1480 900 1420 920 C1360 940 1500 700 1560 580 C1600 480 1200 300 980 240 C820 200 420 220 220 280" fill="none" stroke="rgba(214,184,120,0.9)" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"></path>
-            <path d="M220 280 C340 340 480 380 600 420 C720 460 780 500 740 540 C700 580 560 620 480 840 C420 960 820 1000 1140 1040 C1320 1060 1480 900 1420 920 C1360 940 1500 700 1560 580 C1600 480 1200 300 980 240 C820 200 420 220 220 280" fill="none" stroke="rgba(184,150,90,0.45)" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"></path>
+          <svg class="map-terrain" viewBox="0 0 1800 1300" aria-hidden="true">
+            <defs>
+              <linearGradient id="creekWater" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#9fe0ea"/><stop offset=".45" stop-color="#5eb8cc"/><stop offset="1" stop-color="#3d8aa3"/></linearGradient>
+              <linearGradient id="pondShine" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#c8f0f8" stop-opacity=".55"/><stop offset="1" stop-color="#5aa7c0" stop-opacity="0"/></linearGradient>
+              <radialGradient id="clearingGrass"><stop stop-color="#c4e094"/><stop offset="1" stop-color="#7eb86a"/></radialGradient>
+              <pattern id="flowRipple" width="40" height="18" patternUnits="userSpaceOnUse">
+                <path d="M0 10 Q10 4 20 10 T40 10" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="1.6"/>
+              </pattern>
+            </defs>
+            <ellipse class="terrain-grove" cx="245" cy="300" rx="205" ry="175"/>
+            <ellipse class="terrain-clearing" cx="1140" cy="1040" rx="235" ry="155" fill="url(#clearingGrass)"/>
+            <path class="terrain-hill" d="M1350 665 Q1450 415 1560 435 Q1690 465 1780 690 Z"/>
+            <path class="hill-ramp" d="M1280 720 Q1380 640 1480 600 Q1540 620 1580 680" fill="none" stroke="rgba(110,160,90,.45)" stroke-width="54" stroke-linecap="round"/>
+            <path class="world-creek-bank" d="M1580 -20 C1450 115 1230 165 1010 260 C920 330 865 410 820 500 C755 625 625 690 535 790 C430 905 360 1045 260 1260"/>
+            <ellipse class="terrain-pond-bank" cx="1600" cy="15" rx="410" ry="250"/>
+            <path class="world-creek" d="M1580 -20 C1450 115 1230 165 1010 260 C920 330 865 410 820 500 C755 625 625 690 535 790 C430 905 360 1045 260 1260"/>
+            <path class="world-creek-flow flow-left" d="M1580 -20 C1450 115 1230 165 1010 260 C920 330 865 410 820 500 C755 625 625 690 535 790 C430 905 360 1045 260 1260"/>
+            <path class="world-creek-flow flow-mid" d="M1580 -20 C1450 115 1230 165 1010 260 C920 330 865 410 820 500 C755 625 625 690 535 790 C430 905 360 1045 260 1260"/>
+            <path class="world-creek-flow flow-right" d="M1580 -20 C1450 115 1230 165 1010 260 C920 330 865 410 820 500 C755 625 625 690 535 790 C430 905 360 1045 260 1260"/>
+            <ellipse class="terrain-pond" cx="1600" cy="15" rx="390" ry="230" fill="url(#creekWater)"/>
+            <ellipse cx="1510" cy="55" rx="180" ry="58" fill="url(#pondShine)"/>
           </svg>
 
+          <div class="world-tree wt1 tree-wide" aria-hidden="true"></div>
+          <div class="world-tree wt2 tree-tall" aria-hidden="true"></div>
+          <div class="world-tree wt3" aria-hidden="true"></div>
+          <div class="world-tree wt4 tree-pine" aria-hidden="true"></div>
+          <div class="world-tree wt5 tree-wide" aria-hidden="true"></div>
+          <div class="world-tree wt6 tree-tall" aria-hidden="true"></div>
+          <div class="world-tree wt7 tree-pine" aria-hidden="true"></div>
+          <div class="world-tree wt8" aria-hidden="true"></div>
+          <div class="world-tree wt9 tree-wide" aria-hidden="true"></div>
+          <div class="world-tree wt10 tree-tall" aria-hidden="true"></div>
+          <div class="world-tree wt11 tree-pine" aria-hidden="true"></div>
+          <div class="world-tree wt12 tree-wide" aria-hidden="true"></div>
+          <div class="world-tree wt13 tree-tall" aria-hidden="true"></div>
+          <div class="world-tree wt14 tree-pine" aria-hidden="true"></div>
+          <div class="world-tree wt15 tree-wide" aria-hidden="true"></div>
+          <div class="world-tree wt16 tree-tall" aria-hidden="true"></div>
+
+          <span class="world-detail shrub" style="left:560px;top:230px"></span><span class="world-detail rocks" style="left:1160px;top:330px"></span>
+          <span class="world-detail flowers" style="left:390px;top:520px"></span><span class="world-detail shrub" style="left:930px;top:690px"></span>
+          <span class="world-detail rocks" style="left:1520px;top:720px"></span><span class="world-detail flowers" style="left:1250px;top:840px"></span>
+          <span class="world-detail shrub" style="left:720px;top:980px"></span><span class="world-detail flowers" style="left:250px;top:1040px"></span>
+
           <div class="landmark grove-land" data-spot="grove" style="left:220px;top:280px">
-            <div class="tree t1"></div>
-            <div class="tree t2"></div>
-            <div class="tree t3"></div>
             <span class="land-label">Needs &amp; Wants Grove</span>
           </div>
 
           <div class="landmark brook-land" data-spot="brook" style="left:980px;top:240px">
-            <div class="brook-falls"></div>
-            <div class="brook-rocks"></div>
             <span class="land-label">Budget Brook</span>
           </div>
 
           <div class="landmark hill-land" data-spot="hill" style="left:1560px;top:580px">
-            <div class="hill-shape"></div>
-            <div class="hill-flag"></div>
             <span class="land-label">Goal Hill</span>
           </div>
 
@@ -127,7 +161,6 @@
           </div>
 
           <div class="landmark clearing-land" data-spot="clearing" style="left:1140px;top:1040px">
-            <div class="clearing-ring"></div>
             <span class="land-label">Choice Clearing</span>
           </div>
 
@@ -159,6 +192,12 @@
           <button type="button" class="weed" data-weed="2" style="left:1180px;top:720px" hidden aria-label="Pull weed"></button>
           <button type="button" class="weed" data-weed="3" style="left:860px;top:1100px" hidden aria-label="Pull weed"></button>
           <button type="button" class="weed" data-weed="4" style="left:1500px;top:340px" hidden aria-label="Pull weed"></button>
+          <button type="button" class="weed" data-weed="5" style="left:1040px;top:980px" hidden aria-label="Pull weed"></button>
+          <button type="button" class="weed" data-weed="6" style="left:1220px;top:1080px" hidden aria-label="Pull weed"></button>
+          <button type="button" class="weed" data-weed="7" style="left:980px;top:1120px" hidden aria-label="Pull weed"></button>
+          <button type="button" class="weed" data-weed="8" style="left:1280px;top:960px" hidden aria-label="Pull weed"></button>
+          <button type="button" class="weed" data-weed="9" style="left:700px;top:900px" hidden aria-label="Pull weed"></button>
+          <button type="button" class="weed" data-weed="10" style="left:420px;top:700px" hidden aria-label="Pull weed"></button>
 
           <div class="fog fog-grove" data-fog="grove"></div>
           <div class="fog fog-brook" data-fog="brook"></div>
@@ -171,10 +210,18 @@
         </div>
         <div class="minimap" aria-label="World minimap">
           <div class="minimap-map">
-            <span class="minimap-water"></span>
-            <span class="minimap-path"></span>
-            <span class="minimap-landmark mm-a"></span><span class="minimap-landmark mm-b"></span>
-            <span class="minimap-landmark mm-c"></span><span class="minimap-landmark mm-d"></span>
+            <svg class="minimap-svg" viewBox="0 0 1800 1300" aria-hidden="true">
+              <rect width="1800" height="1300" rx="80" fill="#8fbe75"/>
+              <ellipse cx="245" cy="300" rx="205" ry="175" fill="#639963"/>
+              <ellipse cx="1140" cy="1040" rx="235" ry="155" fill="#afd184"/>
+              <path d="M1350 665 Q1450 415 1560 435 Q1690 465 1780 690 Z" fill="#77a866"/>
+              <ellipse cx="1000" cy="235" rx="155" ry="95" fill="#74bdca"/>
+              <ellipse cx="990" cy="230" rx="150" ry="92" fill="#74bdca"/>
+              <path d="M1010 260 C920 330 865 410 820 500 C755 625 625 690 535 790 C430 905 360 1045 260 1260" fill="none" stroke="#6bb8c7" stroke-width="66" stroke-linecap="round"/>
+              <g fill="#fff4ce" stroke="#416d4f" stroke-width="12">
+                <circle cx="220" cy="280" r="24"/><circle cx="980" cy="240" r="24"/><circle cx="1560" cy="580" r="24"/><circle cx="480" cy="840" r="24"/><circle cx="1140" cy="1040" r="24"/><circle cx="740" cy="540" r="24"/><circle cx="1420" cy="920" r="24"/><circle cx="300" cy="620" r="24"/><circle cx="600" cy="420" r="24"/>
+              </g>
+            </svg>
             <span class="minimap-player" id="minimap-player"></span>
           </div>
           <strong>YOU</strong>

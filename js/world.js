@@ -20,6 +20,8 @@
   const minimapPlayer = document.getElementById("minimap-player");
   const lookToggle = document.getElementById("look-toggle");
   const lookPanel = document.getElementById("look-panel");
+  const mapFrame = document.getElementById("map-frame");
+  const overviewToggle = document.getElementById("map-overview-toggle");
 
   const data0 = KipStorage.load();
   if (!data0.onboarded) {
@@ -31,11 +33,43 @@
 
   const MAP_W = 1800;
   const MAP_H = 1300;
-  const SPEED = 1.35;
-  // The SVG viewBox includes transparent padding, so 0.82 yields a visible body
-  // height of about two-thirds of the camera while keeping head and feet clear.
-  const TARGET_PLAYER_SCREEN_RATIO = 0.82;
+  const SPEED = 2.4;
   const INTERACT_R = 90;
+
+  // Soft water blockers; bridges punch walkable holes through the creek.
+  const WATER_ZONES = [
+    { x: 1190, y: 0, w: 610, h: 245 },
+    { x: 1040, y: 135, w: 260, h: 150 },
+    { x: 860, y: 150, w: 280, h: 180 },
+    { x: 900, y: 250, w: 140, h: 120 },
+    { x: 780, y: 360, w: 120, h: 160 },
+    { x: 680, y: 500, w: 120, h: 160 },
+    { x: 560, y: 640, w: 130, h: 160 },
+    { x: 430, y: 780, w: 140, h: 160 },
+    { x: 320, y: 920, w: 140, h: 180 },
+    { x: 220, y: 1080, w: 150, h: 200 }
+  ];
+  const BRIDGE_ZONES = [
+    { x: 365, y: 775, w: 255, h: 135 }
+  ];
+  function inRect(x, y, r) {
+    return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
+  }
+
+  function onBridge(x, y) {
+    return BRIDGE_ZONES.some(function (z) { return inRect(x, y, z); });
+  }
+
+  function inWater(x, y) {
+    if (onBridge(x, y)) return false;
+    return WATER_ZONES.some(function (z) { return inRect(x, y, z); });
+  }
+
+  function canStand(x, y) {
+    if (x < 40 || x > MAP_W - 40 || y < 60 || y > MAP_H - 40) return false;
+    if (inWater(x, y)) return false;
+    return true;
+  }
 
   const player = { x: 520, y: 520, facing: 1, direction: "down", moving: false };
   const pet = { x: 480, y: 540 };
@@ -46,6 +80,7 @@
   let lessonState = {};
   let activityMode = null;
   let actorsReady = false;
+  let overviewMode = false;
 
   const SPOTS = {
     grove: { lesson: "needs-wants", x: 220, y: 280 },
@@ -104,11 +139,38 @@
     if (svg) svg.classList.toggle("is-walking", player.moving);
   }
 
+  function avatarFromControls() {
+    return {
+      skin: document.getElementById("avatar-skin").value,
+      hair: document.getElementById("avatar-hair").value,
+      shirt: document.getElementById("avatar-shirt").value,
+      pants: document.getElementById("avatar-pants").value,
+      bangs: document.getElementById("avatar-bangs").value,
+      backHair: document.getElementById("avatar-back").value
+    };
+  }
+
+  function renderAvatarPreview() {
+    avatarPreview.innerHTML = KipCreature.avatarSvgMarkup(avatarFromControls(), "avatar");
+  }
+
+  ["avatar-skin", "avatar-shirt", "avatar-pants", "avatar-hair", "avatar-back", "avatar-bangs"].forEach(function (id) {
+    document.getElementById(id).addEventListener("change", renderAvatarPreview);
+  });
+
   lookToggle.addEventListener("click", function () {
     const open = lookPanel.hidden;
     lookPanel.hidden = !open;
     lookToggle.setAttribute("aria-expanded", open ? "true" : "false");
     lookToggle.querySelector("span").textContent = open ? "Close" : "Open";
+  });
+
+  overviewToggle.addEventListener("click", function () {
+    overviewMode = !overviewMode;
+    mapFrame.classList.toggle("is-overview", overviewMode);
+    overviewToggle.setAttribute("aria-pressed", overviewMode ? "true" : "false");
+    overviewToggle.textContent = overviewMode ? "Return to walking view" : "Show full map overview";
+    updateCamera();
   });
 
   function regionLesson(region) {
@@ -131,42 +193,45 @@
 
   document.getElementById("save-look").addEventListener("click", function () {
     KipStorage.update(function (data) {
-      data.avatar = {
-        skin: document.getElementById("avatar-skin").value,
-        hair: document.getElementById("avatar-hair").value,
-        shirt: document.getElementById("avatar-shirt").value,
-        pants: document.getElementById("avatar-pants").value,
-        bangs: document.getElementById("avatar-bangs").value,
-        backHair: document.getElementById("avatar-back").value
-      };
+      data.avatar = avatarFromControls();
     });
     refreshHud();
     statusEl.textContent = "Look saved.";
   });
 
   function placeActors() {
-    playerEl.style.left = player.x + "px";
-    playerEl.style.top = player.y + "px";
-    petEl.style.left = pet.x + "px";
-    petEl.style.top = pet.y + "px";
-    minimapPlayer.style.left = (player.x / MAP_W * 100) + "%";
-    minimapPlayer.style.top = (player.y / MAP_H * 100) + "%";
+    const px = Math.round(player.x);
+    const py = Math.round(player.y);
+    const pex = Math.round(pet.x);
+    const pey = Math.round(pet.y);
+    playerEl.style.left = px + "px";
+    playerEl.style.top = py + "px";
+    petEl.style.left = pex + "px";
+    petEl.style.top = pey + "px";
+    minimapPlayer.style.left = (px / MAP_W * 100) + "%";
+    minimapPlayer.style.top = (py / MAP_H * 100) + "%";
   }
 
+  let cameraZoom = 1;
   function updateCamera() {
     const vw = viewport.clientWidth;
     const vh = viewport.clientHeight;
-    // The SVG is 225 map-pixels tall at its 150px width. Keep the full body at
-    // roughly two-thirds of the viewport height, while avoiding extreme zoom.
-    const zoom = Math.max(1.15, Math.min(2.05, (vh * TARGET_PLAYER_SCREEN_RATIO) / 225));
-    let camX = player.x * zoom - vw / 2;
-    let camY = player.y * zoom - vh / 2;
-    const maxX = MAP_W * zoom - vw;
-    const maxY = MAP_H * zoom - vh;
-    camX = Math.max(0, Math.min(maxX, camX));
-    camY = Math.max(0, Math.min(maxY, camY));
+    if (overviewMode) {
+      const overviewZoom = Math.min(vw / MAP_W, vh / MAP_H);
+      const offsetX = Math.round((vw - MAP_W * overviewZoom) / 2);
+      const offsetY = Math.round((vh - MAP_H * overviewZoom) / 2);
+      map.style.transform = "translate3d(" + offsetX + "px," + offsetY + "px,0) scale(" + overviewZoom + ")";
+      return;
+    }
+    cameraZoom = 1;
+    let camX = Math.round(player.x) * cameraZoom - vw / 2;
+    let camY = Math.round(player.y) * cameraZoom - vh / 2;
+    const maxX = MAP_W * cameraZoom - vw;
+    const maxY = MAP_H * cameraZoom - vh;
+    camX = Math.round(Math.max(0, Math.min(maxX, camX)));
+    camY = Math.round(Math.max(0, Math.min(maxY, camY)));
     map.style.transform =
-      "translate(" + (-camX) + "px," + (-camY) + "px) scale(" + zoom + ")";
+      "translate(" + (-camX) + "px," + (-camY) + "px) scale(" + cameraZoom + ")";
   }
 
   function findNearest() {
@@ -223,8 +288,12 @@
 
     if (player.moving) {
       const len = Math.sqrt(dx * dx + dy * dy) || 1;
-      player.x = Math.max(40, Math.min(MAP_W - 40, player.x + (dx / len) * SPEED));
-      player.y = Math.max(60, Math.min(MAP_H - 40, player.y + (dy / len) * SPEED));
+      const stepX = (dx / len) * SPEED;
+      const stepY = (dy / len) * SPEED;
+      const nextX = player.x + stepX;
+      const nextY = player.y + stepY;
+      if (canStand(nextX, player.y)) player.x = nextX;
+      if (canStand(player.x, nextY)) player.y = nextY;
       if (dx !== 0) player.facing = dx < 0 ? -1 : 1;
       if (dy < 0 && dx < 0) player.direction = "up-left";
       else if (dy < 0 && dx > 0) player.direction = "up-right";
@@ -312,6 +381,14 @@
 
   document.getElementById("interact-btn").addEventListener("click", interact);
 
+  function refreshClearing() {
+    const pulled = document.querySelectorAll('.weed[data-pulled="1"]').length;
+    const clearing = document.querySelector(".clearing-land");
+    if (clearing) clearing.classList.toggle("is-clearer", pulled >= 3);
+    const ring = document.querySelector(".clearing-ring");
+    if (ring) ring.style.opacity = String(Math.min(1, 0.35 + pulled * 0.08));
+  }
+
   document.querySelectorAll(".weed").forEach(function (weed) {
     weed.addEventListener("click", function () {
       const data = KipStorage.load();
@@ -321,9 +398,11 @@
       weed.hidden = true;
       KipStorage.update(function (d) { d.weeds = (d.weeds || 0) + 1; });
       statusEl.textContent = "Pulled a weed! Sell weeds at the Flower Shop.";
+      refreshClearing();
       refreshHud();
     });
   });
+  refreshClearing();
 
   function interact() {
     updateStatus();

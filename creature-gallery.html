@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Creature Stage Gallery · Nest Friend</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    body { min-height: 100vh; background: linear-gradient(180deg, #d9eddf, #f7f1df); }
+    .gallery-shell { width: min(1180px, calc(100% - 2rem)); margin: 0 auto; padding: 2rem 0 4rem; }
+    .gallery-head { display: flex; justify-content: space-between; align-items: end; gap: 1rem; margin-bottom: 1.4rem; }
+    .gallery-head h1 { margin: 0; font-size: clamp(2rem, 5vw, 3.6rem); }
+    .gallery-head p { max-width: 650px; margin: .35rem 0 0; color: var(--ink-soft); }
+    .gallery-home { white-space: nowrap; }
+    .creature-gallery { display: grid; gap: 1.25rem; }
+    .species-board { padding: 1rem; border-radius: 1.35rem; background: rgba(255,248,232,.92); box-shadow: 0 12px 28px var(--shadow); }
+    .species-heading { display: flex; align-items: baseline; gap: .65rem; margin-bottom: .75rem; }
+    .species-heading h2 { margin: 0; }
+    .species-heading span { color: var(--muted); font-weight: 800; }
+    .stage-grid { display: grid; grid-template-columns: repeat(4, minmax(140px, 1fr)); gap: .75rem; }
+    .stage-card { position: relative; min-height: 220px; border-radius: 1rem; padding: .7rem; background: linear-gradient(180deg, #fff, #f5efdf); text-align: center; overflow: hidden; }
+    .stage-card::before { content: ""; position: absolute; left: 12%; right: 12%; bottom: 48px; height: 22px; border-radius: 50%; background: rgba(47,122,85,.1); }
+    .stage-portrait { position: relative; z-index: 1; height: 166px; display: grid; place-items: center; }
+    .gallery-creature { width: 154px; }
+    .stage-card h3 { position: relative; z-index: 1; margin: 0; text-transform: capitalize; }
+    .stage-card small { position: relative; z-index: 1; color: var(--muted); }
+    .species-money { background: linear-gradient(140deg, #fff7d1, #f5df91); }
+    @media (max-width: 760px) {
+      .stage-grid { grid-template-columns: repeat(2, minmax(120px, 1fr)); }
+      .gallery-head { align-items: start; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <main class="gallery-shell">
+    <header class="gallery-head">
+      <div>
+        <p class="eyebrow">Design review</p>
+        <h1>All creature stages</h1>
+        <p>Every elemental creature is shown at Baby, Teen, Adult, and Elderly scale using the exact artwork currently rendered in the game.</p>
+      </div>
+      <a class="btn btn-soft gallery-home" href="index.html">Back to game</a>
+    </header>
+    <div class="creature-gallery" id="creature-gallery"></div>
+  </main>
+
+  <script src="js/storage.js"></script>
+  <script src="js/finance.js"></script>
+  <script src="js/creature.js"></script>
+  <script>
+    (function () {
+      const ids = ["air", "water", "fire", "earth", "metal", "electric", "dark", "fairy", "money"];
+      const stages = ["baby", "teen", "adult", "elderly"];
+      const gallery = document.getElementById("creature-gallery");
+
+      ids.forEach(function (id) {
+        const species = KipStorage.getSpecies(id);
+        const board = document.createElement("section");
+        board.className = "species-board" + (id === "money" ? " species-money" : "");
+
+        const heading = document.createElement("div");
+        heading.className = "species-heading";
+        heading.innerHTML = "<h2>" + species.element + " · " + species.label + "</h2>" +
+          (id === "money" ? "<span>Hidden creature</span>" : "");
+        board.appendChild(heading);
+
+        const grid = document.createElement("div");
+        grid.className = "stage-grid";
+        stages.forEach(function (stage) {
+          const data = {
+            speciesId: id,
+            creature: { age: stage },
+            equippedAccessory: "",
+            cosmeticColors: {}
+          };
+          const card = document.createElement("article");
+          card.className = "stage-card";
+          card.innerHTML = '<div class="stage-portrait">' +
+            KipCreature.petSvgMarkup(data, "creature gallery-creature") +
+            '</div><h3>' + stage + '</h3><small>' + species.label + '</small>';
+          grid.appendChild(card);
+        });
+        board.appendChild(grid);
+        gallery.appendChild(board);
+      });
+    })();
+  </script>
+</body>
+</html>

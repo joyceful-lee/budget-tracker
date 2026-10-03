@@ -243,16 +243,30 @@ const KipCreature = (function () {
     const id = data.equippedAccessory;
     const color = (data.cosmeticColors && data.cosmeticColors[id]) ||
       (id === "acc-bow" ? "#e8a08a" : id === "acc-scarf" ? "#6aaa6e" : "#e8f6ff");
+    function visibleOutline(hex) {
+      const clean = String(hex || "#888888").replace("#", "");
+      const value = clean.length === 3 ? clean.split("").map(function (c) { return c + c; }).join("") : clean;
+      const r = parseInt(value.slice(0, 2), 16) || 0;
+      const g = parseInt(value.slice(2, 4), 16) || 0;
+      const b = parseInt(value.slice(4, 6), 16) || 0;
+      const light = (r * 299 + g * 587 + b * 114) / 1000 > 145;
+      const amount = light ? 0.52 : 0.42;
+      const mix = function (channel) { return Math.round(light ? channel * amount : channel + (255 - channel) * amount); };
+      return "#" + [mix(r), mix(g), mix(b)].map(function (n) { return n.toString(16).padStart(2, "0"); }).join("");
+    }
     if (id === "acc-bow") {
-      return '<g class="pet-bow"><path d="M96 55 C86 42 71 45 74 58 C77 69 89 66 98 60 Z" fill="' + color + '" stroke="#8d5d57" stroke-width="2"></path>' +
-        '<path d="M104 55 C114 42 129 45 126 58 C123 69 111 66 102 60 Z" fill="' + color + '" stroke="#8d5d57" stroke-width="2"></path>' +
-        '<circle cx="100" cy="58" r="6" fill="' + color + '" stroke="#8d5d57" stroke-width="2"></circle></g>';
+      const outline = visibleOutline(color);
+      return '<g class="pet-bow"><path d="M96 55 C86 42 71 45 74 58 C77 69 89 66 98 60 Z" fill="' + color + '" stroke="' + outline + '" stroke-width="2.4"></path>' +
+        '<path d="M104 55 C114 42 129 45 126 58 C123 69 111 66 102 60 Z" fill="' + color + '" stroke="' + outline + '" stroke-width="2.4"></path>' +
+        '<circle cx="100" cy="58" r="6" fill="' + color + '" stroke="' + outline + '" stroke-width="2.4"></circle></g>';
     }
     if (id === "acc-scarf") {
-      return '<path d="M70 130 Q100 145 130 130 L125 155 Q100 148 75 155 Z" fill="' + color + '"></path>';
+      const vein = visibleOutline(color);
+      return '<g class="leaf-necktie"><path d="M100 127 C82 136 82 153 100 166 C118 153 118 136 100 127 Z" fill="' + color + '" stroke="' + vein + '" stroke-width="2"></path>' +
+        '<path d="M100 131 L100 160 M100 143 L91 138 M100 150 L109 144" fill="none" stroke="' + vein + '" stroke-width="2" stroke-linecap="round"></path><path d="M96 124 Q100 120 104 124" fill="none" stroke="' + vein + '" stroke-width="3" stroke-linecap="round"></path></g>';
     }
     if (id === "acc-hat") {
-      return '<path d="M72 50 Q100 26 128 50 L124 56 L76 56 Z" fill="' + color + '"></path><rect x="68" y="52" width="64" height="8" rx="4" fill="' + color + '"></rect>';
+      return '<g class="cloud-hat"><ellipse cx="100" cy="52" rx="34" ry="11" fill="' + color + '"></ellipse><circle cx="82" cy="48" r="13" fill="' + color + '"></circle><circle cx="101" cy="42" r="18" fill="' + color + '"></circle><circle cx="120" cy="48" r="12" fill="' + color + '"></circle><path d="M77 51 Q100 59 125 51" fill="none" stroke="rgba(255,255,255,.65)" stroke-width="3" stroke-linecap="round"></path></g>';
     }
     return "";
   }
@@ -323,65 +337,185 @@ const KipCreature = (function () {
   function petSvgMarkup(data, sizeClass) {
     const species = KipStorage.getSpecies(data.speciesId);
     const cls = sizeClass || "creature";
+    const age = (data.creature && data.creature.age) || "baby";
     return (
-      '<svg class="' + cls + ' age-' + ((data.creature && data.creature.age) || "baby") + '" viewBox="0 0 200 200" aria-hidden="true">' +
+      '<svg class="' + cls + ' age-' + age + ' species-' + species.id + '" viewBox="0 0 200 200" aria-hidden="true">' +
         '<ellipse class="creature-shadow" cx="100" cy="168" rx="42" ry="10"></ellipse>' +
-        bodyByShape(species) +
-        '<circle class="creature-cheek" cx="72" cy="112" r="7"></circle>' +
-        '<circle class="creature-cheek" cx="128" cy="112" r="7"></circle>' +
-        '<ellipse class="creature-eye" cx="82" cy="100" rx="7" ry="9"></ellipse>' +
-        '<ellipse class="creature-eye" cx="118" cy="100" rx="7" ry="9"></ellipse>' +
-        '<circle class="creature-pupil" cx="83" cy="101" r="3.2"></circle>' +
-        '<circle class="creature-pupil" cx="119" cy="101" r="3.2"></circle>' +
-        '<path class="creature-mouth" d="M90 124 Q100 132 110 124" fill="none" stroke-width="3" stroke-linecap="round"></path>' +
+        fantasyBody(species, age) +
+        fantasyFace(species, age) +
+        restFace(species, age) +
         accessoryMarkup(data) +
       "</svg>"
     );
   }
 
+  function fantasyBody(species, age) {
+    const b = species.body, a = species.accent, belly = species.belly;
+    const level = AGE_STAGES.indexOf(age);
+    if (species.id === "air") {
+      if (level === 0) {
+        return '<ellipse cx="78" cy="118" rx="28" ry="24" fill="' + belly + '"></ellipse><ellipse cx="122" cy="118" rx="28" ry="24" fill="' + belly + '"></ellipse><ellipse cx="100" cy="104" rx="34" ry="30" fill="' + belly + '"></ellipse>';
+      }
+      if (level === 1) {
+        return '<ellipse cx="62" cy="122" rx="32" ry="26" fill="' + belly + '"></ellipse><ellipse cx="138" cy="122" rx="32" ry="26" fill="' + belly + '"></ellipse><ellipse cx="100" cy="108" rx="48" ry="36" fill="' + belly + '"></ellipse><ellipse cx="86" cy="86" rx="22" ry="20" fill="' + belly + '"></ellipse><ellipse cx="118" cy="84" rx="24" ry="22" fill="' + belly + '"></ellipse>';
+      }
+      const tone = level === 3 ? "#b7c5d3" : belly;
+      return '<ellipse cx="54" cy="124" rx="30" ry="28" fill="' + tone + '"></ellipse><ellipse cx="146" cy="124" rx="30" ry="28" fill="' + tone + '"></ellipse><ellipse cx="100" cy="112" rx="56" ry="40" fill="' + tone + '"></ellipse><ellipse cx="78" cy="78" rx="26" ry="24" fill="' + tone + '"></ellipse><ellipse cx="124" cy="76" rx="28" ry="26" fill="' + tone + '"></ellipse>' +
+        (level === 3 ? '<path d="M70 148 L58 176 L78 158 L74 182 L98 150 M128 148 L118 174 L140 156" fill="none" stroke="#f4d64e" stroke-width="5" stroke-linejoin="round"></path>' : '');
+    }
+    if (species.id === "water") {
+      if (level === 0) {
+        return '<ellipse cx="100" cy="116" rx="43" ry="31" fill="' + b + '" stroke="' + a + '" stroke-width="4"></ellipse>';
+      }
+      const fins = '<path d="M61 108 Q30 94 36 132 Q49 142 67 121Z M139 108 Q170 94 164 132 Q151 142 133 121Z" fill="' + belly + '" stroke="' + a + '" stroke-width="3"></path>';
+      if (level === 1) {
+        return fins + '<circle cx="100" cy="115" r="46" fill="' + b + '" stroke="' + a + '" stroke-width="4"></circle><path d="M58 119 Q63 108 75 109 Q84 113 84 126 Q79 137 66 136 Q57 130 58 119Z M142 119 Q137 108 125 109 Q116 113 116 126 Q121 137 134 136 Q143 130 142 119Z" fill="' + belly + '" opacity=".72"></path>';
+      }
+      const radius = level === 3 ? 57 : 52;
+      return fins + '<circle cx="100" cy="112" r="' + radius + '" fill="' + b + '" stroke="' + a + '" stroke-width="4"></circle><path d="M45 118 Q54 102 70 104 Q83 109 83 126 Q77 143 59 141 Q44 133 45 118Z M155 118 Q146 102 130 104 Q117 109 117 126 Q123 143 141 141 Q156 133 155 118Z" fill="' + belly + '" opacity=".74"></path><path d="M91 143 Q100 150 109 143" fill="none" stroke="' + a + '" stroke-width="4" stroke-linecap="round"></path>';
+    }
+    if (species.id === "earth") {
+      if (level === 0) {
+        return '<path d="M62 138 C58 104 74 86 100 82 C128 86 146 104 140 138 C126 154 78 154 62 138Z" fill="#909691"></path><path d="M64 99 Q71 76 84 83 Q96 68 108 83 Q124 71 137 99 Q119 94 100 98 Q82 93 64 99Z" fill="' + a + '"></path>';
+      }
+      if (level === 1) {
+        return '<path d="M61 111 Q39 101 35 119 Q37 140 61 133 M139 109 Q162 99 166 119 Q164 140 139 133 M78 145 Q70 162 87 169 M120 145 Q130 162 113 169" fill="#7a827c" stroke="#646b65" stroke-width="7" stroke-linecap="round"></path><path d="M64 143 Q52 128 61 107 Q56 83 80 77 Q95 64 111 78 Q137 73 141 100 Q153 119 136 142 Q119 153 101 147 Q79 156 64 143Z" fill="#898f8a" stroke="#646b65" stroke-width="5"></path><path d="M66 77 Q76 52 89 66 Q102 48 114 66 Q131 53 139 79 Q122 74 105 80 Q86 72 66 77Z" fill="' + a + '"></path>';
+      }
+      return '<path d="M56 98 Q30 80 22 105 Q18 132 47 138 M146 96 Q172 78 179 105 Q181 134 153 139 M75 145 Q58 166 82 177 M126 145 Q142 166 117 177" fill="#717973" stroke="#5c635d" stroke-width="10" stroke-linecap="round"></path><path d="M56 145 Q43 123 56 99 Q48 73 76 66 Q94 48 112 68 Q143 60 147 91 Q164 110 148 142 Q127 158 104 149 Q77 161 56 145Z" fill="#828983" stroke="#5c635d" stroke-width="5"></path><path d="M57 67 Q68 42 82 55 Q98 32 113 54 Q136 37 146 66 L140 78 Q121 68 103 77 Q79 67 60 80Z" fill="' + a + '"></path>';
+    }
+    if (species.id === "fire") {
+      if (level === 0) {
+        return '<path d="M100 42 C125 73 153 86 145 126 C137 165 62 166 54 126 C47 92 75 84 83 57 C89 69 96 60 100 42Z" fill="' + b + '"></path><path d="M101 83 C114 103 125 111 119 132 C113 150 84 150 79 131 C75 113 91 105 101 83Z" fill="' + belly + '"></path>';
+      }
+      if (level === 1) {
+        return '<path d="M70 87 C66 69 80 61 89 48 C96 61 104 54 111 43 C117 56 130 62 134 87Z" fill="' + a + '"></path><path d="M62 108 C58 84 78 76 100 80 C124 76 144 88 140 116 C136 148 64 148 62 108Z" fill="' + b + '"></path><path d="M70 128 Q56 146 66 162 M130 128 Q144 146 134 162" fill="none" stroke="' + b + '" stroke-width="12" stroke-linecap="round"></path>';
+      }
+      const body = '<path d="M64 96 C60 74 78 66 100 70 C124 66 142 78 138 104 C142 138 120 156 100 158 C78 156 58 136 64 96Z" fill="' + b + '"></path><path d="M70 118 Q48 124 46 150 M130 118 Q152 124 154 150 M80 150 Q74 170 86 176 M120 150 Q126 170 114 176" fill="none" stroke="' + b + '" stroke-width="13" stroke-linecap="round"></path>';
+      if (level === 2) {
+        return '<path d="M70 88 C62 64 78 54 88 40 C96 56 106 48 114 34 C122 50 138 56 136 82 C118 74 88 74 70 88Z" fill="' + a + '"></path>' + body;
+      }
+      return '<path d="M70 88 C62 64 78 54 88 40 C96 56 106 48 114 34 C122 50 138 56 136 82 C118 74 88 74 70 88Z" fill="' + a + '"></path>' + body;
+    }
+    if (species.id === "metal") {
+      const teeth = '<path d="M100 46 V60 M100 140 V154 M46 100 H60 M140 100 H154 M62 62 L72 72 M138 62 L128 72 M62 138 L72 128 M138 138 L128 128" stroke="' + a + '" stroke-width="13" stroke-linecap="square"></path>';
+      if (level === 0) return teeth + '<circle cx="100" cy="100" r="43" fill="' + b + '" stroke="' + a + '" stroke-width="5"></circle><circle cx="100" cy="100" r="18" fill="' + belly + '" stroke="' + a + '" stroke-width="5"></circle>';
+      if (level === 1) return teeth + '<circle cx="100" cy="100" r="48" fill="' + b + '" stroke="' + a + '" stroke-width="5"></circle><rect x="74" y="78" width="52" height="43" rx="8" fill="' + belly + '"></rect><circle cx="100" cy="137" r="8" fill="' + a + '"></circle>';
+      return '<g stroke="' + a + '" stroke-width="5"><rect x="49" y="55" width="102" height="99" rx="18" fill="' + b + '"></rect><rect x="70" y="73" width="60" height="47" rx="7" fill="' + belly + '"></rect><path d="M49 90 H29 V132 H49 M151 90 H171 V132 H151 M75 154 V176 M125 154 V176" fill="none" stroke-width="14" stroke-linecap="round"></path></g><circle cx="82" cy="136" r="8" fill="#e8a08a"></circle><circle cx="106" cy="136" r="8" fill="#77c7b7"></circle>' + (level === 2 ? '<path d="M127 39 V56 M119 39 H135" stroke="' + a + '" stroke-width="5"></path>' : '') + (level === 3 ? '<path d="M73 54 L54 29 L72 34 L75 13 M127 54 L148 30 L130 34 L128 12" fill="none" stroke="' + a + '" stroke-width="7" stroke-linecap="round"></path><circle cx="75" cy="11" r="6" fill="#f0c15a"></circle><circle cx="128" cy="10" r="6" fill="#77c7b7"></circle>' : '');
+    }
+    if (species.id === "fairy") {
+      const antennaLevel = Math.max(0, level - 1);
+      const antennaTop = level === 1 ? 48 : level === 2 ? 24 : 8;
+      const bulbs = level === 3 ? '<g fill="#fff1a0" stroke="' + a + '" stroke-width="1.4"><circle cx="66" cy="5" r="4"></circle><circle cx="61" cy="10" r="4"></circle><circle cx="71" cy="10" r="4"></circle><circle cx="66" cy="15" r="4"></circle><circle cx="134" cy="5" r="4"></circle><circle cx="129" cy="10" r="4"></circle><circle cx="139" cy="10" r="4"></circle><circle cx="134" cy="15" r="4"></circle></g>' : '<circle cx="66" cy="' + (antennaTop - 3) + '" r="' + (5 + antennaLevel) + '" fill="#fff1a0" stroke="' + a + '" stroke-width="2"></circle><circle cx="134" cy="' + (antennaTop - 3) + '" r="' + (5 + antennaLevel) + '" fill="#fff1a0" stroke="' + a + '" stroke-width="2"></circle>';
+      const antennae = level === 0 ? '' : '<path d="M84 91 Q78 ' + (antennaTop + 10) + ' 68 ' + antennaTop + ' M116 91 Q122 ' + (antennaTop + 10) + ' 132 ' + antennaTop + '" fill="none" stroke="' + a + '" stroke-width="3.5" stroke-linecap="round"></path>' + bulbs;
+      if (level === 0) {
+        return '<ellipse cx="53" cy="108" rx="32" ry="21" fill="' + belly + '" opacity=".9"></ellipse><ellipse cx="147" cy="108" rx="32" ry="21" fill="' + belly + '" opacity=".9"></ellipse><ellipse cx="100" cy="116" rx="40" ry="32" fill="' + b + '"></ellipse>' + antennae;
+      }
+      if (level === 1) {
+        return '<path d="M60 104 Q28 78 36 134 Q54 146 74 118 M140 104 Q172 78 164 134 Q146 146 126 118" fill="' + belly + '" opacity=".92"></path><ellipse cx="100" cy="116" rx="40" ry="32" fill="' + b + '"></ellipse>' + antennae;
+      }
+      return '<path d="M56 100 Q22 70 30 140 Q52 156 78 120 M144 100 Q178 70 170 140 Q148 156 122 120" fill="' + belly + '" opacity=".9"></path><path d="M78 86 C84 68 116 68 122 86 C140 90 148 118 132 140 C118 162 82 162 68 140 C52 118 60 90 78 86Z" fill="' + b + '"></path>' + antennae;
+    }
+    if (species.id === "dark") {
+      if (level === 0) {
+        return '<path d="M48 146 C52 120 70 112 88 118 C96 104 110 104 118 118 C138 112 156 122 154 146 C130 156 70 156 48 146Z" fill="' + b + '"></path>';
+      }
+      if (level === 1) {
+        return '<path d="M45 147 C42 126 55 114 70 116 C68 92 86 79 102 91 C113 69 139 79 137 105 C158 102 168 126 153 145 C141 158 124 148 111 158 C96 166 82 151 69 158 C58 161 47 156 45 147Z" fill="' + b + '"></path>';
+      }
+      const darkBody = level === 2
+        ? '<path d="M37 143 C35 115 50 100 69 105 C63 75 84 64 104 83 C116 51 149 67 142 101 C169 94 178 124 158 146 C145 159 127 148 114 159 C98 169 80 151 65 160 C51 164 39 156 37 143Z" fill="' + b + '"></path>'
+        : '<path d="M31 146 C27 112 48 92 68 103 C58 66 86 47 106 76 C123 39 158 60 146 101 C175 89 187 126 164 149 C146 164 127 148 112 163 C94 175 74 151 57 163 C42 167 33 158 31 146Z" fill="' + b + '"></path>';
+      return darkBody + '<path d="M48 113 Q25 101 25 80 M153 111 Q178 101 180 78" fill="none" stroke="' + b + '" stroke-width="13" stroke-linecap="round"></path>' + (level === 3 ? '<circle cx="24" cy="77" r="9" fill="' + a + '"></circle><circle cx="181" cy="75" r="9" fill="' + a + '"></circle>' : '');
+    }
+    if (species.id === "money") {
+      if (level === 0) {
+        return '<circle cx="100" cy="112" r="48" fill="' + b + '" stroke="' + a + '" stroke-width="8"></circle><circle cx="100" cy="112" r="34" fill="none" stroke="' + belly + '" stroke-width="4"></circle>';
+      }
+      if (level === 1) {
+        return '<circle cx="100" cy="104" r="48" fill="' + b + '" stroke="' + a + '" stroke-width="8"></circle><circle cx="100" cy="104" r="34" fill="none" stroke="' + belly + '" stroke-width="4"></circle><ellipse cx="78" cy="158" rx="15" ry="7" fill="#6b4f16"></ellipse><ellipse cx="122" cy="158" rx="15" ry="7" fill="#6b4f16"></ellipse>';
+      }
+      return '<path d="M78 143 V158 M122 143 V158" stroke="#6b4f16" stroke-width="11" stroke-linecap="round"></path><ellipse cx="76" cy="166" rx="16" ry="8" fill="#6b4f16"></ellipse><ellipse cx="124" cy="166" rx="16" ry="8" fill="#6b4f16"></ellipse><circle cx="100" cy="100" r="49" fill="' + b + '" stroke="' + a + '" stroke-width="8"></circle><circle cx="100" cy="100" r="35" fill="none" stroke="' + belly + '" stroke-width="4"></circle>';
+    }
+    if (species.id === "electric") {
+      if (level === 0) {
+        return '<path d="M108 36 L78 88 L98 88 L82 150 L128 80 L106 80Z" fill="' + b + '" stroke="' + a + '" stroke-width="5" stroke-linejoin="round"></path>';
+      }
+      const spread = level === 1 ? 48 : level === 2 ? 54 : 60;
+      const legs = '<g fill="none" stroke="' + b + '" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"><path d="M72 99 L' + (100 - spread) + ' 82 L' + (92 - spread) + ' 67 M68 113 L' + (94 - spread) + ' 113 L' + (84 - spread) + ' 130 M74 127 L' + (104 - spread) + ' 143 L' + (98 - spread) + ' 159 M128 99 L' + (100 + spread) + ' 82 L' + (108 + spread) + ' 67 M132 113 L' + (106 + spread) + ' 113 L' + (116 + spread) + ' 130 M126 127 L' + (96 + spread) + ' 143 L' + (102 + spread) + ' 159"></path></g>';
+      const horn = level === 1 ? '<path d="M92 75 L100 53 L108 75Z" fill="' + b + '" stroke="' + a + '" stroke-width="3"></path>' : level === 2 ? '<path d="M95 76 L106 49 L99 49 L108 30 L103 58 L111 58Z" fill="' + b + '" stroke="' + a + '" stroke-width="3" stroke-linejoin="round"></path>' : '<path d="M94 76 L108 45 L100 45 L112 18 L105 54 L114 54Z" fill="' + b + '" stroke="' + a + '" stroke-width="3" stroke-linejoin="round"></path>';
+      return legs + '<circle cx="100" cy="110" r="38" fill="' + b + '" stroke="' + a + '" stroke-width="4"></circle>' + horn;
+    }
+    return bodyByShape(species);
+  }
+
+  function fantasyFace(species, age) {
+    const level = AGE_STAGES.indexOf(age);
+    if (species.id === "metal") {
+      const eye = level === 0 ? '#f4fdff' : '#43515c';
+      const stroke = level === 0 ? ' stroke="#2f3d48" stroke-width="2.5"' : '';
+      return '<g class="creature-face"><rect x="76" y="86" width="14" height="10" rx="3" fill="' + eye + '"' + stroke + '></rect><rect x="110" y="86" width="14" height="10" rx="3" fill="' + eye + '"' + stroke + '></rect><path class="creature-mouth" d="M91 108 H109" fill="none" stroke="#43515c" stroke-width="4" stroke-linecap="round"></path></g>';
+    }
+    if (species.id === "money") {
+      const y = level === 0 ? 105 : 94;
+      if (level === 3) return '<g class="creature-face"><path d="M78 ' + y + ' Q86 ' + (y - 7) + ' 94 ' + y + ' M106 ' + y + ' Q114 ' + (y - 7) + ' 122 ' + y + '" fill="none" stroke="#6b4f16" stroke-width="3.5" stroke-linecap="round"></path><path class="creature-mouth" d="M91 ' + (y + 20) + ' Q100 ' + (y + 12) + ' 109 ' + (y + 20) + '" fill="none" stroke="#6b4f16" stroke-width="3"></path></g>';
+      return '<g class="creature-face"><path d="M78 ' + y + ' Q86 ' + (y - 7) + ' 94 ' + y + ' M106 ' + y + ' Q114 ' + (y - 7) + ' 122 ' + y + '" fill="none" stroke="#6b4f16" stroke-width="3.5" stroke-linecap="round"></path><path class="creature-mouth" d="M92 ' + (y + 18) + ' Q100 ' + (y + 24) + ' 108 ' + (y + 18) + '" fill="none" stroke="#6b4f16" stroke-width="3"></path></g>';
+    }
+    if (species.id === "dark") {
+      const y = level === 0 ? 128 : 112;
+      return '<g class="creature-face"><circle cx="86" cy="' + y + '" r="4.5" fill="#f4eaff"></circle><circle cx="114" cy="' + y + '" r="4.5" fill="#f4eaff"></circle><path class="creature-mouth" d="M94 ' + (y + 14) + ' Q100 ' + (y + 18) + ' 106 ' + (y + 14) + '" fill="none" stroke="#f4eaff" stroke-width="2.5"></path></g>';
+    }
+    if (species.id === "earth") {
+      return '<g class="creature-face"><path d="M78 104 L90 102 M110 102 L122 104" stroke="#294e32" stroke-width="4" stroke-linecap="round"></path><circle cx="84" cy="112" r="4" fill="#294e32"></circle><circle cx="116" cy="112" r="4" fill="#294e32"></circle><path class="creature-mouth" d="M92 128 Q100 133 108 128" fill="none" stroke="#294e32" stroke-width="3"></path></g>';
+    }
+    if (species.id === "fire" && level === 3) {
+      return '<g class="creature-face"><path d="M78 104 L91 109 M109 109 L122 104" fill="none" stroke="#5d291d" stroke-width="4" stroke-linecap="round"></path><circle cx="87" cy="111" r="3.5" fill="#5d291d"></circle><circle cx="113" cy="111" r="3.5" fill="#5d291d"></circle><path class="creature-mouth" d="M89 124 Q100 135 111 124" fill="none" stroke="#5d291d" stroke-width="3"></path></g>';
+    }
+    if (species.id === "air") {
+      if (level === 0) return '<g class="creature-face"><path d="M78 110 Q86 116 94 110 M106 110 Q114 116 122 110" fill="none" stroke="#486678" stroke-width="3.5" stroke-linecap="round"></path><ellipse class="creature-mouth" cx="100" cy="126" rx="5" ry="3.5" fill="#486678"></ellipse></g>';
+      if (level === 1) return '<g class="creature-face"><circle cx="84" cy="111" r="4" fill="#486678"></circle><circle cx="116" cy="111" r="4" fill="#486678"></circle><path class="creature-mouth" d="M94 126 Q100 131 106 126" fill="none" stroke="#486678" stroke-width="3"></path></g>';
+      if (level === 2) return '<g class="creature-face"><path d="M76 107 Q85 101 94 108 M106 108 Q115 101 124 107" fill="none" stroke="#3d596d" stroke-width="4" stroke-linecap="round"></path><path class="creature-mouth" d="M91 126 Q100 135 109 126" fill="none" stroke="#3d596d" stroke-width="3.5"></path></g>';
+      return '<g class="creature-face"><path d="M76 112 Q85 105 94 112 M106 112 Q115 105 124 112" fill="none" stroke="#3d596d" stroke-width="4" stroke-linecap="round"></path><path class="creature-mouth" d="M91 132 Q100 124 109 132" fill="none" stroke="#3d596d" stroke-width="3.5"></path></g>';
+    }
+    if (species.id === "electric") {
+      if (level === 0) {
+        return '<g class="creature-face"><circle cx="94" cy="91" r="4" fill="#5b4810"></circle><circle cx="106" cy="91" r="4" fill="#5b4810"></circle><path class="creature-mouth" d="M95 102 Q100 106 105 102" fill="none" stroke="#5b4810" stroke-width="2.8"></path></g>';
+      }
+      return '<g class="creature-face"><circle cx="90" cy="106" r="4" fill="#5b4810"></circle><circle cx="110" cy="106" r="4" fill="#5b4810"></circle><path class="creature-mouth" d="M96 118 Q100 122 104 118" fill="none" stroke="#5b4810" stroke-width="2.8"></path></g>';
+    }
+    return '<g class="creature-face"><ellipse cx="84" cy="106" rx="4.5" ry="5.5" fill="#263b34"></ellipse><ellipse cx="116" cy="106" rx="4.5" ry="5.5" fill="#263b34"></ellipse><circle cx="83" cy="104" r="1.4" fill="#fff"></circle><circle cx="115" cy="104" r="1.4" fill="#fff"></circle><path class="creature-mouth" d="M94 122 Q100 126 106 122" fill="none" stroke="#263b34" stroke-width="2.6" stroke-linecap="round"></path></g>';
+  }
+
+  function restFace(species, age) {
+    const level = AGE_STAGES.indexOf(age);
+    const y = species.id === "dark" && level === 0 ? 128 : species.id === "electric" && level === 0 ? 92 : species.id === "money" ? 103 : 108;
+    const ink = species.id === "dark" ? "#f4eaff" : species.id === "money" ? "#6b4f16" : "#35483f";
+    return '<g class="rest-face"><path d="M78 ' + y + ' Q86 ' + (y + 7) + ' 94 ' + y + ' M106 ' + y + ' Q114 ' + (y + 7) + ' 122 ' + y + '" fill="none" stroke="' + ink + '" stroke-width="3.5" stroke-linecap="round"></path><path d="M94 ' + (y + 17) + ' Q100 ' + (y + 13) + ' 106 ' + (y + 17) + '" fill="none" stroke="' + ink + '" stroke-width="2.8" stroke-linecap="round"></path><text x="129" y="' + (y - 11) + '" fill="' + ink + '" font-size="14" font-family="sans-serif">z</text><text x="140" y="' + (y - 23) + '" fill="' + ink + '" font-size="18" font-family="sans-serif">z</text></g>';
+  }
+
   function bangsPath(bangs, hair) {
     if (bangs === "full") {
-      return '<path d="M36 39 Q60 25 84 39 L82 54 Q77 48 72 56 Q66 48 60 56 Q54 48 48 56 Q42 48 38 53 Z" fill="' + hair + '"></path>';
+      return '<path d="M36 34 Q60 18 84 34 L84 50 Q74 42 66 50 Q60 44 54 50 Q46 42 36 50 Z" fill="' + hair + '"></path>';
     }
     if (bangs === "curtain") {
-      return (
-        '<path d="M34 39 Q47 26 59 34 Q56 49 47 58 Q42 48 36 51 Z" fill="' + hair + '"></path>' +
-        '<path d="M86 39 Q73 26 61 34 Q64 49 73 58 Q78 48 84 51 Z" fill="' + hair + '"></path>'
-      );
+      return '<path d="M60 27 C49 20 36 26 35 38 C34 49 43 55 60 39 C57 35 57 31 60 27Z" fill="' + hair + '"></path><path d="M60 27 C71 20 84 26 85 38 C86 49 77 55 60 39 C63 35 63 31 60 27Z" fill="' + hair + '"></path><path d="M52 29 Q60 18 68 29 L64 40 Q60 43 56 40Z" fill="' + hair + '"></path>';
     }
-    return '<path d="M34 39 Q55 25 84 39 Q69 40 55 58 Q49 50 37 53 Z" fill="' + hair + '"></path>';
+    return '<path d="M36 35 C50 20 72 20 84 35 C70 36 62 44 52 56 C46 60 38 58 36 52 C44 48 44 42 36 46 C34 42 34 38 36 35Z" fill="' + hair + '"></path>';
   }
 
   function backHairPath(style, hair) {
-    // Cap sits behind and over the crown so the top of the head is never bare.
-    const crown =
-      '<ellipse cx="60" cy="40" rx="30" ry="24" fill="' + hair + '"></ellipse>' +
-      '<path d="M30 48 Q28 70 34 78 Q40 62 44 52" fill="' + hair + '"></path>' +
-      '<path d="M90 48 Q92 70 86 78 Q80 62 76 52" fill="' + hair + '"></path>';
-
     if (style === "long") {
-      return (
-        crown +
-        '<path d="M30 56 Q26 110 34 130 Q46 112 60 110 Q74 112 86 130 Q94 110 90 56 Z" fill="' + hair + '"></path>'
-      );
+      return '<path d="M31 51 C28 28 43 15 60 15 C78 15 93 28 89 52 C92 78 92 106 86 124 Q60 116 34 124 C28 105 28 78 31 51Z" fill="' + hair + '"></path>';
     }
     if (style === "pony") {
       return (
-        crown +
-        '<path d="M78 48 Q104 62 98 108 Q90 84 80 68" fill="' + hair + '"></path>' +
-        '<ellipse cx="96" cy="108" rx="10" ry="14" fill="' + hair + '"></ellipse>'
+        '<path d="M33 49 C30 28 45 16 60 16 C76 16 90 29 87 51 L83 68 Q60 76 37 68 C33 62 31 56 33 49Z" fill="' + hair + '"></path>' +
+        '<ellipse cx="82" cy="47" rx="7" ry="6" fill="' + hair + '"></ellipse><path d="M86 48 C99 54 100 69 94 81 C88 91 91 100 84 112 C78 120 72 111 77 99 C83 84 82 70 88 61 C91 56 90 52 86 48Z" fill="' + hair + '"></path>'
       );
     }
     if (style === "afro") {
-      return (
-        '<circle cx="40" cy="40" r="20" fill="' + hair + '"></circle>' +
-        '<circle cx="60" cy="28" r="24" fill="' + hair + '"></circle>' +
-        '<circle cx="80" cy="40" r="20" fill="' + hair + '"></circle>' +
-        '<circle cx="48" cy="54" r="14" fill="' + hair + '"></circle>' +
-        '<circle cx="72" cy="54" r="14" fill="' + hair + '"></circle>'
-      );
+      return '<path d="M28 54 C24 28 40 10 60 8 C82 10 98 28 94 54 C98 70 90 84 76 88 C68 96 52 96 44 88 C30 84 24 70 28 54Z" fill="' + hair + '"></path>';
     }
-    return crown;
+    return '<path d="M32 51 C29 29 44 16 60 16 C77 16 91 29 88 52 C89 68 83 79 74 85 Q60 91 46 85 C37 79 31 68 32 51Z" fill="' + hair + '"></path>';
   }
 
   function avatarSvgMarkup(avatar, sizeClass, walking) {
@@ -390,6 +524,7 @@ const KipCreature = (function () {
     return (
       '<svg class="' + (sizeClass || "avatar") + walkClass + '" style="--avatar-hair:' + a.hair + '" viewBox="0 0 120 180" aria-hidden="true">' +
         '<ellipse cx="60" cy="172" rx="24" ry="6" fill="rgba(31,51,41,0.22)"></ellipse>' +
+        '<g class="avatar-hair-back">' + backHairPath(a.backHair, a.hair) + "</g>" +
         '<g class="avatar-leg avatar-limb left">' +
           '<rect x="43" y="116" width="13" height="34" rx="6" fill="' + a.pants + '"></rect>' +
           '<ellipse cx="50" cy="154" rx="9" ry="5" fill="#2a2a2a"></ellipse>' +
@@ -398,19 +533,22 @@ const KipCreature = (function () {
           '<rect x="64" y="116" width="13" height="34" rx="6" fill="' + a.pants + '"></rect>' +
           '<ellipse cx="70" cy="154" rx="9" ry="5" fill="#2a2a2a"></ellipse>' +
         "</g>" +
-        '<rect class="avatar-torso" x="38" y="76" width="44" height="46" rx="14" fill="' + a.shirt + '"></rect>' +
         '<g class="avatar-arm avatar-limb left">' +
-          '<rect x="24" y="80" width="14" height="34" rx="7" fill="' + a.skin + '"></rect>' +
+          '<circle cx="38" cy="87" r="10" fill="' + a.shirt + '"></circle>' +
+          '<rect x="27" y="86" width="14" height="32" rx="7" fill="' + a.skin + '"></rect>' +
         "</g>" +
         '<g class="avatar-arm avatar-limb right">' +
-          '<rect x="82" y="80" width="14" height="34" rx="7" fill="' + a.skin + '"></rect>' +
+          '<circle cx="82" cy="87" r="10" fill="' + a.shirt + '"></circle>' +
+          '<rect x="79" y="86" width="14" height="32" rx="7" fill="' + a.skin + '"></rect>' +
         "</g>" +
-        '<g class="avatar-hair-back">' + backHairPath(a.backHair, a.hair) + "</g>" +
-        '<circle class="avatar-head" cx="60" cy="56" r="24" fill="' + a.skin + '"></circle>' +
+        '<path class="avatar-torso" d="M44 78 Q60 70 76 78 Q82 94 78 118 Q60 130 42 118 Q38 94 44 78Z" fill="' + a.shirt + '"></path>' +
+        '<circle class="avatar-head" cx="60" cy="56" r="23" fill="' + a.skin + '"></circle>' +
+        '<g class="avatar-hair-front-backview">' + backHairPath(a.backHair, a.hair) + "</g>" +
         '<g class="avatar-bangs">' + bangsPath(a.bangs, a.hair) + "</g>" +
-        '<g class="avatar-face"><circle class="avatar-eye eye-left" cx="51" cy="56" r="2.8" fill="#1f3329"></circle>' +
-        '<circle class="avatar-eye eye-right" cx="69" cy="56" r="2.8" fill="#1f3329"></circle>' +
-        '<path d="M54 66 Q60 70 66 66" fill="none" stroke="#1f3329" stroke-width="2" stroke-linecap="round"></path></g>' +
+        '<g class="avatar-face"><path d="M47 52 Q51 49 55 52 M65 52 Q69 49 73 52" fill="none" stroke="#3d281f" stroke-width="1.5" stroke-linecap="round"></path>' +
+        '<ellipse class="avatar-eye eye-left" cx="51" cy="57" rx="2.4" ry="3" fill="#3a2a26"></ellipse><ellipse class="avatar-eye eye-right" cx="69" cy="57" rx="2.4" ry="3" fill="#3a2a26"></ellipse>' +
+        '<circle cx="50.4" cy="56" r=".7" fill="#fff"></circle><circle cx="68.4" cy="56" r=".7" fill="#fff"></circle>' +
+        '<path d="M56 67 Q60 70 64 67" fill="none" stroke="#713e42" stroke-width="1.5" stroke-linecap="round"></path></g>' +
       "</svg>"
     );
   }

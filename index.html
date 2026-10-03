@@ -16,6 +16,7 @@
       <a href="index.html" aria-current="page">Home</a>
       <a href="budget.html">Money Journal</a>
       <a href="world.html" data-brand="world">World</a>
+      <button type="button" class="nav-reset" data-reset-game>Reset game</button>
     </nav>
   </header>
 
@@ -117,6 +118,7 @@
       </div>
 
       <div class="nest-focal">
+        <div class="care-effect" id="care-effect" aria-hidden="true"></div>
         <div class="care-orbit nest-orbit">
           <button type="button" class="orbit-btn orbit-left-top" data-care="feed" aria-label="Feed"><span>Feed</span></button>
           <button type="button" class="orbit-btn orbit-left-bottom" data-care="play" aria-label="Play"><span>Play</span></button>
@@ -152,6 +154,16 @@
   <div class="hatch-overlay" id="hatch-overlay" hidden>
     <div class="hatch-egg" id="hatch-egg"></div>
     <p id="hatch-text">Something is wiggling...</p>
+  </div>
+
+  <div class="modal" id="growth-modal" hidden>
+    <div class="modal-card growth-card" role="dialog" aria-modal="true" aria-labelledby="growth-title">
+      <p class="eyebrow">A new memory!</p>
+      <h2 id="growth-title">Your friend grew!</h2>
+      <div class="growth-reveal" id="growth-reveal"></div>
+      <p id="growth-copy"></p>
+      <button type="button" class="btn btn-primary" id="growth-close">Meet this new stage</button>
+    </div>
   </div>
 
   <script src="js/storage.js"></script>
