@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nest Friend</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="page-home">
+  <header class="site-header header-over-hero">
+    <a class="brand" href="index.html" data-brand="nest">Nest Friend</a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="index.html" aria-current="page">Home</a>
+      <a href="budget.html">Money Journal</a>
+      <a href="world.html" data-brand="world">World</a>
+    </nav>
+  </header>
+
+  <div class="modal" id="onboard-modal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="onboard-title">
+      <p class="brand-mark modal-brand">Nest Friend</p>
+      <h2 id="onboard-title">Name your friend and pick a mystery egg</h2>
+      <p class="modal-copy">Every egg looks alike. One of eight elemental friends—or a very rare hidden friend—will choose you at random.</p>
+
+      <label class="field-label">
+        Pet name
+        <input type="text" id="pet-name-input" maxlength="18" placeholder="Pip" autocomplete="off">
+      </label>
+
+      <p class="field-label">Choose an egg</p>
+      <div class="egg-grid" id="egg-grid" role="listbox" aria-label="Egg choices"></div>
+
+      <p class="modal-error" id="onboard-error" aria-live="polite"></p>
+      <button type="button" class="btn btn-primary" id="hatch-btn">Hatch egg</button>
+    </div>
+  </div>
+
+  <main class="nest-layout" id="nest-layout" hidden>
+    <aside class="stats-rail" aria-label="Pet stats">
+      <div class="pet-id">
+        <p class="eyebrow" id="pet-species-label">Baby</p>
+        <h1 id="pet-name-display">Friend</h1>
+        <p class="nest-vibe"><span>Nest vibe</span> <strong id="vitality-text">Warming up</strong></p>
+      </div>
+
+      <div class="stat-meters" aria-label="Wellbeing">
+        <div class="meter">
+          <div class="meter-top"><span>Fullness</span><span id="stat-hunger">0</span></div>
+          <div class="meter-track"><div class="meter-fill" id="fill-hunger"></div></div>
+        </div>
+        <div class="meter">
+          <div class="meter-top"><span>Joy</span><span id="stat-joy">0</span></div>
+          <div class="meter-track"><div class="meter-fill" id="fill-joy"></div></div>
+        </div>
+        <div class="meter">
+          <div class="meter-top"><span>Energy</span><span id="stat-energy">0</span></div>
+          <div class="meter-track"><div class="meter-fill" id="fill-energy"></div></div>
+        </div>
+        <div class="meter">
+          <div class="meter-top"><span>Tidy</span><span id="stat-tidy">0</span></div>
+          <div class="meter-track"><div class="meter-fill" id="fill-tidy"></div></div>
+        </div>
+      </div>
+
+      <div class="token-row compact">
+        <span>Nest tokens</span>
+        <strong id="token-count">0</strong>
+      </div>
+      <div class="token-row compact flower-row">
+        <span>Flowers</span>
+        <strong id="flower-count-home">0</strong>
+      </div>
+      <p class="care-feedback" id="care-feedback" aria-live="polite"></p>
+      <p class="wellbeing-link"><strong>Wellbeing link:</strong> 65% daily care + 35% Money Journal health. A stronger budget also slows stat decay and earns care tokens.</p>
+
+      <div class="nest-shop" id="nest-shop">
+        <button type="button" class="shop-toggle" id="shop-toggle" aria-expanded="false">
+          Flower shop
+          <span class="shop-toggle-hint" id="shop-toggle-hint">Open</span>
+        </button>
+        <div class="shop-panel" id="shop-panel" hidden>
+          <p class="shop-note">Preview an item, choose its color, then buy it with flowers. Equipped items raise joy.</p>
+          <div id="shop-list" class="shop-list"></div>
+          <div class="shop-preview-bar" id="shop-preview-bar" hidden>
+            <p id="preview-label">Previewing</p>
+            <button type="button" class="shelf-btn" id="preview-buy">Buy</button>
+            <button type="button" class="btn btn-soft" id="preview-cancel">Cancel preview</button>
+          </div>
+        </div>
+      </div>
+
+      <button type="button" class="memory-box-button" id="memory-box-open">
+        <span aria-hidden="true">✦</span>
+        <span><strong>Memory Box</strong><small>Creature stages you have unlocked</small></span>
+      </button>
+
+      <div class="rail-links">
+        <a class="btn btn-soft" href="budget.html">Money Journal</a>
+        <a class="btn btn-primary" href="world.html" data-brand="world">World</a>
+      </div>
+    </aside>
+
+    <section class="nest-stage" aria-label="Pet habitat">
+      <div class="nest-scenery" aria-hidden="true">
+        <div class="nest-sky-layer">
+          <span class="cloud c1"></span>
+          <span class="cloud c2"></span>
+          <span class="cloud c3"></span>
+          <span class="sun-disc"></span>
+        </div>
+        <div class="nest-grass-layer">
+          <div class="grass-tuft-field" id="grass-field"></div>
+        </div>
+      </div>
+
+      <div class="nest-focal">
+        <div class="care-orbit nest-orbit">
+          <button type="button" class="orbit-btn orbit-left-top" data-care="feed" aria-label="Feed"><span>Feed</span></button>
+          <button type="button" class="orbit-btn orbit-left-bottom" data-care="play" aria-label="Play"><span>Play</span></button>
+          <button type="button" class="orbit-btn orbit-right-top" data-care="rest" aria-label="Rest"><span>Rest</span></button>
+          <button type="button" class="orbit-btn orbit-right-bottom" data-care="tidy" aria-label="Tidy"><span>Tidy</span></button>
+        </div>
+
+        <div class="nest-stack">
+          <div class="creature-wrap on-nest" id="creature-wrap">
+            <div id="creature-svg-host"></div>
+          </div>
+          <div class="nest-bed" id="nest-bed">
+            <div class="nest-rim"></div>
+            <div class="nest-inner"></div>
+            <div class="nest-decor" id="nest-decor"></div>
+          </div>
+          <p class="creature-speech under-nest" id="creature-speech" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal" id="memory-modal" hidden>
+    <div class="modal-card memory-card wide" role="dialog" aria-modal="true" aria-labelledby="memory-title">
+      <button type="button" class="modal-close" id="memory-close" aria-label="Close memory box">Close</button>
+      <p class="eyebrow">Keepsakes</p>
+      <h2 id="memory-title">Memory Box</h2>
+      <p class="modal-copy">Each creature and growth stage has a permanent place. Silhouettes are memories still waiting to be made.</p>
+      <div class="memory-grid" id="memory-grid"></div>
+    </div>
+  </div>
+
+  <div class="hatch-overlay" id="hatch-overlay" hidden>
+    <div class="hatch-egg" id="hatch-egg"></div>
+    <p id="hatch-text">Something is wiggling...</p>
+  </div>
+
+  <script src="js/storage.js"></script>
+  <script src="js/finance.js"></script>
+  <script src="js/creature.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
