@@ -4,10 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>World</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/styles.css?v=20261004a">
 </head>
 <body class="page-world">
   <header class="site-header world-top">
@@ -87,7 +88,7 @@
         <button type="button" class="btn btn-soft" id="save-look">Save look</button>
       </div>
 
-      <p class="hint">Arrow keys or WASD to walk. Press Interact near a place. On phones, use the pad.</p>
+      <p class="hint">Arrow keys or WASD to walk. Press Interact near a place. Press H beside a weed to harvest it. On phones, use the pad and Harvest button.</p>
       <p class="world-status" id="world-status" aria-live="polite"></p>
     </aside>
 
@@ -98,24 +99,25 @@
           <div class="map-pond"></div>
           <svg class="map-terrain" viewBox="0 0 1800 1300" aria-hidden="true">
             <defs>
-              <linearGradient id="creekWater" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#9fe0ea"/><stop offset=".45" stop-color="#5eb8cc"/><stop offset="1" stop-color="#3d8aa3"/></linearGradient>
+              <linearGradient id="creekWater" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#c0f1f1"/><stop offset=".22" stop-color="#79ceda"/><stop offset=".58" stop-color="#4ca9c0"/><stop offset="1" stop-color="#28788f"/></linearGradient>
               <linearGradient id="pondShine" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#c8f0f8" stop-opacity=".55"/><stop offset="1" stop-color="#5aa7c0" stop-opacity="0"/></linearGradient>
               <radialGradient id="clearingGrass"><stop stop-color="#c4e094"/><stop offset="1" stop-color="#7eb86a"/></radialGradient>
-              <pattern id="flowRipple" width="40" height="18" patternUnits="userSpaceOnUse">
-                <path d="M0 10 Q10 4 20 10 T40 10" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="1.6"/>
+              <pattern id="flowRipple" width="54" height="28" patternUnits="userSpaceOnUse">
+                <path d="M-8 9 Q5 2 18 9 T44 9 T70 9 M5 22 Q15 17 25 22 T45 22" fill="none" stroke="rgba(235,255,255,.48)" stroke-width="2" stroke-linecap="round"/>
               </pattern>
             </defs>
             <ellipse class="terrain-grove" cx="245" cy="300" rx="205" ry="175"/>
             <ellipse class="terrain-clearing" cx="1140" cy="1040" rx="235" ry="155" fill="url(#clearingGrass)"/>
             <path class="terrain-hill" d="M1350 665 Q1450 415 1560 435 Q1690 465 1780 690 Z"/>
-            <path class="hill-ramp" d="M1280 720 Q1380 640 1480 600 Q1540 620 1580 680" fill="none" stroke="rgba(110,160,90,.45)" stroke-width="54" stroke-linecap="round"/>
             <path class="world-creek-bank" d="M1580 -20 C1450 115 1230 165 1010 260 C920 330 865 410 820 500 C755 625 625 690 535 790 C430 905 360 1045 260 1260"/>
             <ellipse class="terrain-pond-bank" cx="1600" cy="15" rx="410" ry="250"/>
             <path class="world-creek" d="M1580 -20 C1450 115 1230 165 1010 260 C920 330 865 410 820 500 C755 625 625 690 535 790 C430 905 360 1045 260 1260"/>
+            <path class="world-creek-texture" d="M1580 -20 C1450 115 1230 165 1010 260 C920 330 865 410 820 500 C755 625 625 690 535 790 C430 905 360 1045 260 1260"/>
             <path class="world-creek-flow flow-left" d="M1580 -20 C1450 115 1230 165 1010 260 C920 330 865 410 820 500 C755 625 625 690 535 790 C430 905 360 1045 260 1260"/>
             <path class="world-creek-flow flow-mid" d="M1580 -20 C1450 115 1230 165 1010 260 C920 330 865 410 820 500 C755 625 625 690 535 790 C430 905 360 1045 260 1260"/>
             <path class="world-creek-flow flow-right" d="M1580 -20 C1450 115 1230 165 1010 260 C920 330 865 410 820 500 C755 625 625 690 535 790 C430 905 360 1045 260 1260"/>
             <ellipse class="terrain-pond" cx="1600" cy="15" rx="390" ry="230" fill="url(#creekWater)"/>
+            <ellipse class="terrain-pond-texture" cx="1600" cy="15" rx="378" ry="218" fill="url(#flowRipple)"/>
             <ellipse cx="1510" cy="55" rx="180" ry="58" fill="url(#pondShine)"/>
           </svg>
 
@@ -145,7 +147,7 @@
             <span class="land-label">Needs &amp; Wants Grove</span>
           </div>
 
-          <div class="landmark brook-land" data-spot="brook" style="left:980px;top:240px">
+          <div class="landmark brook-land" data-spot="brook" style="left:800px;top:300px">
             <span class="land-label">Budget Brook</span>
           </div>
 
@@ -164,7 +166,7 @@
             <span class="land-label">Choice Clearing</span>
           </div>
 
-          <div class="landmark shop-land" data-spot="shop" style="left:740px;top:540px" id="spot-shop">
+          <div class="landmark shop-land" data-spot="shop" style="left:1040px;top:500px" id="spot-shop">
             <div class="shop-hut"></div>
             <span class="land-label">Flower Shop</span>
             <span class="lock-tag" id="shop-lock">Locked</span>
@@ -215,9 +217,8 @@
               <ellipse cx="245" cy="300" rx="205" ry="175" fill="#639963"/>
               <ellipse cx="1140" cy="1040" rx="235" ry="155" fill="#afd184"/>
               <path d="M1350 665 Q1450 415 1560 435 Q1690 465 1780 690 Z" fill="#77a866"/>
-              <ellipse cx="1000" cy="235" rx="155" ry="95" fill="#74bdca"/>
-              <ellipse cx="990" cy="230" rx="150" ry="92" fill="#74bdca"/>
-              <path d="M1010 260 C920 330 865 410 820 500 C755 625 625 690 535 790 C430 905 360 1045 260 1260" fill="none" stroke="#6bb8c7" stroke-width="66" stroke-linecap="round"/>
+              <ellipse cx="1600" cy="15" rx="390" ry="230" fill="#74bdca"/>
+              <path d="M1580 -20 C1450 115 1230 165 1010 260 C920 330 865 410 820 500 C755 625 625 690 535 790 C430 905 360 1045 260 1260" fill="none" stroke="#6bb8c7" stroke-width="66" stroke-linecap="round"/>
               <g fill="#fff4ce" stroke="#416d4f" stroke-width="12">
                 <circle cx="220" cy="280" r="24"/><circle cx="980" cy="240" r="24"/><circle cx="1560" cy="580" r="24"/><circle cx="480" cy="840" r="24"/><circle cx="1140" cy="1040" r="24"/><circle cx="740" cy="540" r="24"/><circle cx="1420" cy="920" r="24"/><circle cx="300" cy="620" r="24"/><circle cx="600" cy="420" r="24"/>
               </g>
@@ -239,6 +240,7 @@
         <button type="button" data-dir="down" aria-label="Down">D</button>
         <button type="button" data-dir="down-right" aria-label="Down right"></button>
       </div>
+      <button type="button" class="btn btn-soft harvest-btn" id="harvest-btn">Harvest nearby weed</button>
     </section>
   </main>
 
@@ -267,10 +269,10 @@
     </div>
   </div>
 
-  <script src="js/storage.js"></script>
-  <script src="js/finance.js"></script>
-  <script src="js/creature.js"></script>
-  <script src="js/lessons.js"></script>
-  <script src="js/world.js"></script>
+  <script src="js/storage.js?v=20261003c"></script>
+  <script src="js/finance.js?v=20261003c"></script>
+  <script src="js/creature.js?v=20261004a"></script>
+  <script src="js/lessons.js?v=20261003c"></script>
+  <script src="js/world.js?v=20261004a"></script>
 </body>
 </html>

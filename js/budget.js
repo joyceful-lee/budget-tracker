@@ -28,6 +28,7 @@
   const chargeModalTitle = document.getElementById("charge-modal-title");
   const chargeSubmit = document.getElementById("charge-submit");
   const openSavingsDeposit = document.getElementById("open-savings-deposit");
+  const savingsDepositCopy = document.getElementById("savings-deposit-copy");
   const chargeRecurring = document.getElementById("charge-recurring");
   const chargeFrequencyWrap = document.getElementById("charge-frequency-wrap");
   let editingChargeId = null;
@@ -68,7 +69,6 @@
       formGoal.target.value = data.savingsGoal.target;
       formGoal.current.value = data.savingsGoal.current;
     }
-    formSavingsDeposit.hidden = !data.savingsGoal;
     openModal("goal-modal");
   });
   document.getElementById("open-charge").addEventListener("click", function () {
@@ -81,18 +81,17 @@
   });
   openSavingsDeposit.addEventListener("click", function () {
     const data = KipStorage.load();
+    const amountInput = formSavingsDeposit.amount;
     if (!data.savingsGoal) {
-      formSavingsDeposit.hidden = true;
-      openModal("goal-modal");
-      formGoal.label.focus();
+      savingsDepositCopy.textContent = "Set a savings goal first, then this window will move money from your pocket into that jar.";
+      amountInput.disabled = true;
+      openModal("savings-deposit-modal");
       return;
     }
-    formGoal.label.value = data.savingsGoal.label;
-    formGoal.target.value = data.savingsGoal.target;
-    formGoal.current.value = data.savingsGoal.current;
-    formSavingsDeposit.hidden = false;
-    openModal("goal-modal");
-    formSavingsDeposit.amount.focus();
+    savingsDepositCopy.textContent = "Move available pocket money into “" + data.savingsGoal.label + ".”";
+    amountInput.disabled = false;
+    openModal("savings-deposit-modal");
+    amountInput.focus();
   });
 
   function removeCharge(id) {
@@ -200,19 +199,28 @@
     coinField.innerHTML = "";
     coinField.className = "coin-field" + (coinMotion ? " coins-" + coinMotion : "");
     const stableCount = KipFinance.coinCount(bal);
-    const count = stableCount + (coinMotion === "out" ? 3 : 0);
+    const previousCount = lastCoinCount === null ? stableCount : lastCoinCount;
+    const spending = coinMotion === "out";
+    const count = spending ? Math.max(stableCount, previousCount) : stableCount;
+    const fallingCount = spending ? Math.max(1, previousCount - stableCount) : 0;
+    const fallingStart = Math.max(0, count - fallingCount);
     for (var i = 0; i < count; i++) {
       const coin = document.createElement("span");
       coin.className = "vis-coin";
       if (coinMotion === "in" && lastCoinCount !== null && i >= lastCoinCount) coin.classList.add("is-new");
-      if (coinMotion === "out" && i >= stableCount) coin.classList.add("is-leaving");
-      coin.style.setProperty("--stack-y", (i * 8) + "px");
+      if (spending && i >= fallingStart) coin.classList.add("is-leaving");
+      coin.style.setProperty("--stack-y", (i * 4.5) + "px");
       coin.style.setProperty("--coin-wobble", ((i % 3) - 1) * 4 + "px");
-      coin.style.animationDelay = (i * 0.06) + "s";
+      coin.style.animationDelay = (Math.max(0, i - fallingStart) * 0.045) + "s";
       coinField.appendChild(coin);
     }
     lastCoinCount = stableCount;
     coinMotion = "";
+    if (spending) {
+      window.setTimeout(function () {
+        renderCoins(KipFinance.balance(KipStorage.load()));
+      }, 700);
+    }
   }
 
   function renderStickies(data) {
@@ -410,7 +418,7 @@
       next.transactions.push({ id: KipStorage.uid(), type: "out", label: "Moved to savings: " + next.savingsGoal.label, amount: amount, date: todayIso() });
     });
     formSavingsDeposit.reset();
-    closeModal("goal-modal");
+    closeModal("savings-deposit-modal");
     render();
   });
 

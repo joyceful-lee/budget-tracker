@@ -84,11 +84,11 @@
 
   const SPOTS = {
     grove: { lesson: "needs-wants", x: 220, y: 280 },
-    brook: { lesson: "budget-basics", x: 980, y: 240 },
+    brook: { lesson: "budget-basics", x: 800, y: 300 },
     hill: { lesson: "saving-goals", x: 1560, y: 580 },
     bridge: { lesson: "upcoming-bills", x: 480, y: 840 },
     clearing: { lesson: "smart-choices", x: 1140, y: 1040 },
-    shop: { activity: "shop", x: 740, y: 540, unlock: "shop" },
+    shop: { activity: "shop", x: 1040, y: 500, unlock: "shop" },
     bank: { activity: "bank", x: 1420, y: 920, unlock: "bank" },
     planner: { activity: "planner", x: 300, y: 620, unlock: "planner" },
     gift: { activity: "gift", x: 600, y: 420, unlock: "gift" }
@@ -357,6 +357,10 @@
       e.preventDefault();
       interact();
     }
+    if ((e.key === "h" || e.key === "H") && !e.repeat) {
+      e.preventDefault();
+      harvestNearestWeed();
+    }
   });
 
   window.addEventListener("keyup", function (e) {
@@ -380,6 +384,7 @@
   });
 
   document.getElementById("interact-btn").addEventListener("click", interact);
+  document.getElementById("harvest-btn").addEventListener("click", harvestNearestWeed);
 
   function refreshClearing() {
     const pulled = document.querySelectorAll('.weed[data-pulled="1"]').length;
@@ -389,18 +394,44 @@
     if (ring) ring.style.opacity = String(Math.min(1, 0.35 + pulled * 0.08));
   }
 
-  document.querySelectorAll(".weed").forEach(function (weed) {
-    weed.addEventListener("click", function () {
-      const data = KipStorage.load();
-      if (!KipStorage.unlocks(data).weeds) return;
-      if (weed.dataset.pulled === "1") return;
-      weed.dataset.pulled = "1";
-      weed.hidden = true;
-      KipStorage.update(function (d) { d.weeds = (d.weeds || 0) + 1; });
-      statusEl.textContent = "Pulled a weed! Sell weeds at the Flower Shop.";
-      refreshClearing();
-      refreshHud();
+  function harvestWeed(weed) {
+    const data = KipStorage.load();
+    if (!KipStorage.unlocks(data).weeds) {
+      statusEl.textContent = "Weed harvesting unlocks after the clearing lesson.";
+      return false;
+    }
+    if (!weed || weed.dataset.pulled === "1" || weed.hidden) return false;
+    weed.dataset.pulled = "1";
+    weed.hidden = true;
+    KipStorage.update(function (d) { d.weeds = (d.weeds || 0) + 1; });
+    statusEl.textContent = "Pulled a weed! Sell weeds at the Flower Shop.";
+    refreshClearing();
+    refreshHud();
+    return true;
+  }
+
+  function harvestNearestWeed() {
+    let nearestWeed = null;
+    let nearestDistance = Infinity;
+    document.querySelectorAll(".weed").forEach(function (weed) {
+      if (weed.hidden || weed.dataset.pulled === "1") return;
+      const weedX = parseFloat(weed.style.left) || 0;
+      const weedY = parseFloat(weed.style.top) || 0;
+      const distance = Math.hypot(player.x - weedX, player.y - weedY);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestWeed = weed;
+      }
     });
+    if (nearestDistance > 105 || !harvestWeed(nearestWeed)) {
+      if (KipStorage.unlocks(KipStorage.load()).weeds) {
+        statusEl.textContent = "Move closer to a weed, then press H or Harvest.";
+      }
+    }
+  }
+
+  document.querySelectorAll(".weed").forEach(function (weed) {
+    weed.addEventListener("click", function () { harvestWeed(weed); });
   });
   refreshClearing();
 
@@ -429,8 +460,19 @@
   }
 
   function openLesson(id) {
-    activeLesson = KipLessons[id];
-    activeLesson.id = id;
+    const baseLesson = KipLessons[id];
+    const saved = KipStorage.load();
+    const isReview = KipStorage.hasLesson(saved, id);
+    const reviewSets = window.KipLessonReviews && window.KipLessonReviews[id];
+    const reviewNumber = (saved.lessonReviews && saved.lessonReviews[id]) || 0;
+    activeLesson = Object.assign({}, baseLesson, {
+      id: id,
+      isReview: isReview && !!(reviewSets && reviewSets.length),
+      reviewReward: 2,
+      steps: isReview && reviewSets && reviewSets.length
+        ? reviewSets[reviewNumber % reviewSets.length]
+        : baseLesson.steps
+    });
     activityMode = "lesson";
     stepIndex = 0;
     lessonState = {};
@@ -440,6 +482,8 @@
   }
 
   function renderStep() {
+    if (!activeLesson || !activeLesson.steps || !activeLesson.steps.length) return;
+    if (stepIndex >= activeLesson.steps.length) stepIndex = activeLesson.steps.length - 1;
     const step = activeLesson.steps[stepIndex];
     activityBody.innerHTML = "";
     activityFeedback.textContent = "";
@@ -867,10 +911,30 @@
 
   btnCheck.addEventListener("click", checkStep);
   btnNext.addEventListener("click", function () {
-    stepIndex += 1;
+    if (!activeLesson || stepIndex >= activeLesson.steps.length - 1) {
+      btnNext.hidden = true;
+      btnFinish.hidden = false;
+      return;
+    }
+    stepIndex = Math.min(stepIndex + 1, activeLesson.steps.length - 1);
     renderStep();
   });
   btnFinish.addEventListener("click", function () {
+    if (activeLesson.isReview) {
+      KipStorage.update(function (data) {
+        data.lessonReviews = data.lessonReviews || {};
+        data.lessonReviews[activeLesson.id] = (data.lessonReviews[activeLesson.id] || 0) + 1;
+        data.flowers = (data.flowers || 0) + activeLesson.reviewReward;
+      });
+      activityFeedback.textContent = "Review complete! You earned " + activeLesson.reviewReward + " flowers. A fresh question set will be ready next time.";
+      btnFinish.hidden = true;
+      refreshHud();
+      window.setTimeout(function () {
+        activityModal.hidden = true;
+        updateStatus();
+      }, 1700);
+      return;
+    }
     const first = KipCreature.completeLesson(
       activeLesson.id,
       activeLesson.flowerBonus,

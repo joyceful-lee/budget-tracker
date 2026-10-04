@@ -145,6 +145,7 @@ const KipStorage = (function () {
       bankedFlowers: 0,
       weeds: 0,
       lessonsCompleted: [],
+      lessonReviews: {},
       mapUnlocks: ["start"],
       ownedCosmetics: [],
       equippedNest: "",
@@ -186,6 +187,7 @@ const KipStorage = (function () {
         creature: Object.assign(defaultData().creature, parsed.creature || {}),
         avatar: Object.assign(defaultData().avatar, parsed.avatar || {}),
         cosmeticColors: Object.assign({}, parsed.cosmeticColors || {}),
+        lessonReviews: Object.assign({}, parsed.lessonReviews || {}),
         memories: Object.assign({}, parsed.memories || {}),
         retiredCreatures: Array.isArray(parsed.retiredCreatures) ? parsed.retiredCreatures : []
       });

@@ -122,14 +122,11 @@ const KipFinance = (function () {
     return 0;
   }
 
-  /** How many coin circles to show for a kid-friendly pocket visual. */
+  /** Forty coins represent the full $5,000 pocket scale: each coin is $125. */
   function coinCount(balanceValue) {
-    if (balanceValue <= 0) return 0;
-    if (balanceValue < 5) return 1;
-    if (balanceValue < 15) return 3;
-    if (balanceValue < 30) return 5;
-    if (balanceValue < 50) return 7;
-    return 9;
+    const balance = Math.max(0, Math.min(5000, Number(balanceValue) || 0));
+    if (balance <= 0) return 0;
+    return Math.min(40, Math.max(1, Math.ceil(balance / 125)));
   }
 
   return {

@@ -34,6 +34,8 @@
   const memoryClose = document.getElementById("memory-close");
   const onboardTitle = document.getElementById("onboard-title");
   const careEffect = document.getElementById("care-effect");
+  const nestStage = document.querySelector(".nest-stage");
+  const weatherBadge = document.getElementById("home-weather-badge");
   const growthModal = document.getElementById("growth-modal");
   const growthReveal = document.getElementById("growth-reveal");
   const growthTitle = document.getElementById("growth-title");
@@ -272,6 +274,15 @@
     tokenCount.textContent = live.tokens || 0;
     flowerCount.textContent = live.flowers || 0;
     vitalityText.textContent = KipFinance.healthLabel(KipFinance.healthScore(live));
+    const journalVibe = KipFinance.healthScore(live);
+    const weather = journalVibe >= 70 ? "sunny" : journalVibe >= 40 ? "cloudy" : "rainy";
+    nestStage.classList.remove("weather-sunny", "weather-cloudy", "weather-rainy");
+    nestStage.classList.add("weather-" + weather);
+    weatherBadge.textContent = weather === "sunny"
+      ? "Sunny skies · " + KipFinance.healthLabel(journalVibe)
+      : weather === "cloudy"
+        ? "Soft clouds · " + KipFinance.healthLabel(journalVibe)
+        : "Gentle rain · " + KipFinance.healthLabel(journalVibe);
     speechEl.textContent = KipCreature.speechForState(live);
 
     const mood = KipCreature.mood(live);

@@ -365,36 +365,40 @@ const KipCreature = (function () {
     }
     if (species.id === "water") {
       if (level === 0) {
-        return '<ellipse cx="100" cy="116" rx="43" ry="31" fill="' + b + '" stroke="' + a + '" stroke-width="4"></ellipse>';
+        return '<ellipse cx="100" cy="116" rx="43" ry="31" fill="' + b + '"></ellipse>';
       }
-      const fins = '<path d="M61 108 Q30 94 36 132 Q49 142 67 121Z M139 108 Q170 94 164 132 Q151 142 133 121Z" fill="' + belly + '" stroke="' + a + '" stroke-width="3"></path>';
+      const blush = '<defs><radialGradient id="waterBlushLeft' + level + '" fx="70%" fy="58%"><stop stop-color="#fff" stop-opacity=".92"></stop><stop offset="1" stop-color="#fff" stop-opacity="0"></stop></radialGradient><radialGradient id="waterBlushRight' + level + '" fx="30%" fy="58%"><stop stop-color="#fff" stop-opacity=".92"></stop><stop offset="1" stop-color="#fff" stop-opacity="0"></stop></radialGradient></defs>';
+      const fins = '<path d="M66 104 C48 91 24 91 19 110 C23 132 48 145 72 124Z M134 104 C152 91 176 91 181 110 C177 132 152 145 128 124Z" fill="' + belly + '" opacity=".96"></path><path d="M54 106 Q39 108 31 118 M146 106 Q161 108 169 118" fill="none" stroke="#ffffff" stroke-opacity=".42" stroke-width="3" stroke-linecap="round"></path>';
       if (level === 1) {
-        return fins + '<circle cx="100" cy="115" r="46" fill="' + b + '" stroke="' + a + '" stroke-width="4"></circle><path d="M58 119 Q63 108 75 109 Q84 113 84 126 Q79 137 66 136 Q57 130 58 119Z M142 119 Q137 108 125 109 Q116 113 116 126 Q121 137 134 136 Q143 130 142 119Z" fill="' + belly + '" opacity=".72"></path>';
+        return blush + fins + '<circle cx="100" cy="115" r="46" fill="' + b + '"></circle><circle cx="70" cy="123" r="18" fill="url(#waterBlushLeft' + level + ')"></circle><circle cx="130" cy="123" r="18" fill="url(#waterBlushRight' + level + ')"></circle>';
       }
       const radius = level === 3 ? 57 : 52;
-      return fins + '<circle cx="100" cy="112" r="' + radius + '" fill="' + b + '" stroke="' + a + '" stroke-width="4"></circle><path d="M45 118 Q54 102 70 104 Q83 109 83 126 Q77 143 59 141 Q44 133 45 118Z M155 118 Q146 102 130 104 Q117 109 117 126 Q123 143 141 141 Q156 133 155 118Z" fill="' + belly + '" opacity=".74"></path><path d="M91 143 Q100 150 109 143" fill="none" stroke="' + a + '" stroke-width="4" stroke-linecap="round"></path>';
+      return blush + fins + '<circle cx="100" cy="112" r="' + radius + '" fill="' + b + '"></circle><circle cx="64" cy="122" r="21" fill="url(#waterBlushLeft' + level + ')"></circle><circle cx="136" cy="122" r="21" fill="url(#waterBlushRight' + level + ')"></circle><path d="M91 143 Q100 150 109 143" fill="none" stroke="' + a + '" stroke-width="4" stroke-linecap="round"></path>';
     }
     if (species.id === "earth") {
       if (level === 0) {
-        return '<path d="M62 138 C58 104 74 86 100 82 C128 86 146 104 140 138 C126 154 78 154 62 138Z" fill="#909691"></path><path d="M64 99 Q71 76 84 83 Q96 68 108 83 Q124 71 137 99 Q119 94 100 98 Q82 93 64 99Z" fill="' + a + '"></path>';
+        return '<path d="M62 138 C58 104 74 86 100 82 C128 86 146 104 140 138 C126 154 78 154 62 138Z" fill="#909691"></path><path d="M72 94 Q77 75 88 80 Q98 68 108 80 Q120 73 129 94 Q115 89 100 93 Q86 89 72 94Z" fill="' + a + '"></path>';
       }
       if (level === 1) {
-        return '<path d="M61 111 Q39 101 35 119 Q37 140 61 133 M139 109 Q162 99 166 119 Q164 140 139 133 M78 145 Q70 162 87 169 M120 145 Q130 162 113 169" fill="#7a827c" stroke="#646b65" stroke-width="7" stroke-linecap="round"></path><path d="M64 143 Q52 128 61 107 Q56 83 80 77 Q95 64 111 78 Q137 73 141 100 Q153 119 136 142 Q119 153 101 147 Q79 156 64 143Z" fill="#898f8a" stroke="#646b65" stroke-width="5"></path><path d="M66 77 Q76 52 89 66 Q102 48 114 66 Q131 53 139 79 Q122 74 105 80 Q86 72 66 77Z" fill="' + a + '"></path>';
+        return '<path d="M61 111 Q39 101 35 119 Q37 140 61 133 M139 109 Q162 99 166 119 Q164 140 139 133 M78 145 Q70 162 87 169 M120 145 Q130 162 113 169" fill="none" stroke="#7a827c" stroke-width="13" stroke-linecap="round"></path><path d="M64 143 Q52 128 61 107 Q56 83 80 77 Q95 64 111 78 Q137 73 141 100 Q153 119 136 142 Q119 153 101 147 Q79 156 64 143Z" fill="#898f8a"></path><path d="M66 86 Q76 61 89 75 Q102 57 114 75 Q131 62 139 88 Q122 83 105 89 Q86 81 66 86Z" fill="' + a + '"></path>';
       }
-      return '<path d="M56 98 Q30 80 22 105 Q18 132 47 138 M146 96 Q172 78 179 105 Q181 134 153 139 M75 145 Q58 166 82 177 M126 145 Q142 166 117 177" fill="#717973" stroke="#5c635d" stroke-width="10" stroke-linecap="round"></path><path d="M56 145 Q43 123 56 99 Q48 73 76 66 Q94 48 112 68 Q143 60 147 91 Q164 110 148 142 Q127 158 104 149 Q77 161 56 145Z" fill="#828983" stroke="#5c635d" stroke-width="5"></path><path d="M57 67 Q68 42 82 55 Q98 32 113 54 Q136 37 146 66 L140 78 Q121 68 103 77 Q79 67 60 80Z" fill="' + a + '"></path>';
+      if (level === 2) {
+        return '<path d="M56 98 Q30 80 22 105 Q18 132 47 138 M146 96 Q172 78 179 105 Q181 134 153 139 M75 145 Q58 166 82 177 M126 145 Q142 166 117 177" fill="none" stroke="#717973" stroke-width="17" stroke-linecap="round"></path><path d="M56 145 Q43 123 56 99 Q48 73 76 66 Q94 48 112 68 Q143 60 147 91 Q164 110 148 142 Q127 158 104 149 Q77 161 56 145Z" fill="#828983"></path><path d="M57 67 Q68 42 82 55 Q98 32 113 54 Q136 37 146 66 L140 78 Q121 68 103 77 Q79 67 60 80Z" fill="' + a + '"></path>';
+      }
+      return '<path d="M49 103 Q20 84 15 112 Q14 143 47 145 M151 102 Q181 82 186 113 Q185 144 151 146 M68 148 Q47 171 76 181 M133 148 Q154 171 124 181" fill="none" stroke="#656d67" stroke-width="20" stroke-linecap="round"></path><path d="M47 148 Q32 122 49 96 Q43 64 73 57 Q92 36 113 60 Q148 51 154 87 Q176 109 156 146 Q132 166 105 155 Q73 169 47 148Z" fill="#747b75"></path><path d="M49 58 Q61 31 78 46 Q96 22 114 44 Q141 27 153 58 L145 76 Q122 63 102 73 Q75 61 53 77Z" fill="' + a + '"></path><path d="M63 133 Q100 151 139 132 Q129 158 103 155 Q76 164 63 133Z" fill="#626963" opacity=".5"></path>';
     }
     if (species.id === "fire") {
       if (level === 0) {
         return '<path d="M100 42 C125 73 153 86 145 126 C137 165 62 166 54 126 C47 92 75 84 83 57 C89 69 96 60 100 42Z" fill="' + b + '"></path><path d="M101 83 C114 103 125 111 119 132 C113 150 84 150 79 131 C75 113 91 105 101 83Z" fill="' + belly + '"></path>';
       }
       if (level === 1) {
-        return '<path d="M70 87 C66 69 80 61 89 48 C96 61 104 54 111 43 C117 56 130 62 134 87Z" fill="' + a + '"></path><path d="M62 108 C58 84 78 76 100 80 C124 76 144 88 140 116 C136 148 64 148 62 108Z" fill="' + b + '"></path><path d="M70 128 Q56 146 66 162 M130 128 Q144 146 134 162" fill="none" stroke="' + b + '" stroke-width="12" stroke-linecap="round"></path>';
+        return '<path d="M70 92 C66 74 80 66 89 53 C96 66 104 59 111 48 C117 61 130 67 134 92Z" fill="' + a + '"></path><path d="M62 108 C58 84 78 76 100 80 C124 76 144 88 140 116 C136 148 64 148 62 108Z" fill="' + b + '"></path><ellipse cx="76" cy="153" rx="10" ry="12" fill="' + b + '"></ellipse><ellipse cx="124" cy="153" rx="10" ry="12" fill="' + b + '"></ellipse>';
       }
       const body = '<path d="M64 96 C60 74 78 66 100 70 C124 66 142 78 138 104 C142 138 120 156 100 158 C78 156 58 136 64 96Z" fill="' + b + '"></path><path d="M70 118 Q48 124 46 150 M130 118 Q152 124 154 150 M80 150 Q74 170 86 176 M120 150 Q126 170 114 176" fill="none" stroke="' + b + '" stroke-width="13" stroke-linecap="round"></path>';
       if (level === 2) {
-        return '<path d="M70 88 C62 64 78 54 88 40 C96 56 106 48 114 34 C122 50 138 56 136 82 C118 74 88 74 70 88Z" fill="' + a + '"></path>' + body;
+        return '<path d="M66 90 C57 70 72 59 82 43 C88 55 94 52 100 32 C106 49 113 49 120 36 C127 52 143 62 136 86 C117 75 86 76 66 90Z" fill="' + a + '"></path><path d="M78 82 C73 69 84 63 90 52 C96 63 99 60 102 45 C107 59 113 58 120 50 C126 64 131 71 124 82 Q101 73 78 82Z" fill="' + b + '"></path>' + body;
       }
-      return '<path d="M70 88 C62 64 78 54 88 40 C96 56 106 48 114 34 C122 50 138 56 136 82 C118 74 88 74 70 88Z" fill="' + a + '"></path>' + body;
+      return '<path d="M64 91 C54 70 70 58 80 41 C87 54 92 51 98 25 C105 48 112 48 121 31 C126 48 147 59 137 87 C117 74 84 75 64 91Z" fill="' + a + '"></path><path d="M76 83 C70 67 83 59 90 46 C97 59 100 55 103 38 C109 56 116 54 123 44 C130 60 135 70 126 82 Q101 71 76 83Z" fill="' + b + '"></path>' + body;
     }
     if (species.id === "metal") {
       const teeth = '<path d="M100 46 V60 M100 140 V154 M46 100 H60 M140 100 H154 M62 62 L72 72 M138 62 L128 72 M62 138 L72 128 M138 138 L128 128" stroke="' + a + '" stroke-width="13" stroke-linecap="square"></path>';
@@ -405,7 +409,7 @@ const KipCreature = (function () {
     if (species.id === "fairy") {
       const antennaLevel = Math.max(0, level - 1);
       const antennaTop = level === 1 ? 48 : level === 2 ? 24 : 8;
-      const bulbs = level === 3 ? '<g fill="#fff1a0" stroke="' + a + '" stroke-width="1.4"><circle cx="66" cy="5" r="4"></circle><circle cx="61" cy="10" r="4"></circle><circle cx="71" cy="10" r="4"></circle><circle cx="66" cy="15" r="4"></circle><circle cx="134" cy="5" r="4"></circle><circle cx="129" cy="10" r="4"></circle><circle cx="139" cy="10" r="4"></circle><circle cx="134" cy="15" r="4"></circle></g>' : '<circle cx="66" cy="' + (antennaTop - 3) + '" r="' + (5 + antennaLevel) + '" fill="#fff1a0" stroke="' + a + '" stroke-width="2"></circle><circle cx="134" cy="' + (antennaTop - 3) + '" r="' + (5 + antennaLevel) + '" fill="#fff1a0" stroke="' + a + '" stroke-width="2"></circle>';
+      const bulbs = level === 3 ? '<g fill="#fff1a0" stroke="' + a + '" stroke-width="1.4" style="filter:drop-shadow(0 0 7px #fff3a3)"><circle cx="66" cy="5" r="4"></circle><circle cx="61" cy="10" r="4"></circle><circle cx="71" cy="10" r="4"></circle><circle cx="66" cy="15" r="4"></circle><circle cx="134" cy="5" r="4"></circle><circle cx="129" cy="10" r="4"></circle><circle cx="139" cy="10" r="4"></circle><circle cx="134" cy="15" r="4"></circle></g>' : '<g style="filter:drop-shadow(0 0 6px #fff3a3)"><circle cx="66" cy="' + (antennaTop - 3) + '" r="' + (5 + antennaLevel) + '" fill="#fff1a0" stroke="' + a + '" stroke-width="2"></circle><circle cx="134" cy="' + (antennaTop - 3) + '" r="' + (5 + antennaLevel) + '" fill="#fff1a0" stroke="' + a + '" stroke-width="2"></circle></g>';
       const antennae = level === 0 ? '' : '<path d="M84 91 Q78 ' + (antennaTop + 10) + ' 68 ' + antennaTop + ' M116 91 Q122 ' + (antennaTop + 10) + ' 132 ' + antennaTop + '" fill="none" stroke="' + a + '" stroke-width="3.5" stroke-linecap="round"></path>' + bulbs;
       if (level === 0) {
         return '<ellipse cx="53" cy="108" rx="32" ry="21" fill="' + belly + '" opacity=".9"></ellipse><ellipse cx="147" cy="108" rx="32" ry="21" fill="' + belly + '" opacity=".9"></ellipse><ellipse cx="100" cy="116" rx="40" ry="32" fill="' + b + '"></ellipse>' + antennae;
@@ -428,13 +432,14 @@ const KipCreature = (function () {
       return darkBody + '<path d="M48 113 Q25 101 25 80 M153 111 Q178 101 180 78" fill="none" stroke="' + b + '" stroke-width="13" stroke-linecap="round"></path>' + (level === 3 ? '<circle cx="24" cy="77" r="9" fill="' + a + '"></circle><circle cx="181" cy="75" r="9" fill="' + a + '"></circle>' : '');
     }
     if (species.id === "money") {
+      const shine = '<g fill="#fff9cf" style="filter:drop-shadow(0 0 4px #fff3a3)"><path d="M72 73 L75 81 L83 84 L75 87 L72 95 L69 87 L61 84 L69 81Z"></path><circle cx="128" cy="72" r="3"></circle></g>';
       if (level === 0) {
-        return '<circle cx="100" cy="112" r="48" fill="' + b + '" stroke="' + a + '" stroke-width="8"></circle><circle cx="100" cy="112" r="34" fill="none" stroke="' + belly + '" stroke-width="4"></circle>';
+        return '<circle cx="100" cy="112" r="48" fill="' + b + '" stroke="' + a + '" stroke-width="8"></circle><circle cx="100" cy="112" r="34" fill="none" stroke="' + belly + '" stroke-width="4"></circle>' + shine;
       }
       if (level === 1) {
-        return '<circle cx="100" cy="104" r="48" fill="' + b + '" stroke="' + a + '" stroke-width="8"></circle><circle cx="100" cy="104" r="34" fill="none" stroke="' + belly + '" stroke-width="4"></circle><ellipse cx="78" cy="158" rx="15" ry="7" fill="#6b4f16"></ellipse><ellipse cx="122" cy="158" rx="15" ry="7" fill="#6b4f16"></ellipse>';
+        return '<circle cx="100" cy="104" r="48" fill="' + b + '" stroke="' + a + '" stroke-width="8"></circle><circle cx="100" cy="104" r="34" fill="none" stroke="' + belly + '" stroke-width="4"></circle>' + shine + '<ellipse cx="78" cy="158" rx="15" ry="7" fill="#6b4f16"></ellipse><ellipse cx="122" cy="158" rx="15" ry="7" fill="#6b4f16"></ellipse>';
       }
-      return '<path d="M78 143 V158 M122 143 V158" stroke="#6b4f16" stroke-width="11" stroke-linecap="round"></path><ellipse cx="76" cy="166" rx="16" ry="8" fill="#6b4f16"></ellipse><ellipse cx="124" cy="166" rx="16" ry="8" fill="#6b4f16"></ellipse><circle cx="100" cy="100" r="49" fill="' + b + '" stroke="' + a + '" stroke-width="8"></circle><circle cx="100" cy="100" r="35" fill="none" stroke="' + belly + '" stroke-width="4"></circle>';
+      return '<path d="M78 143 V158 M122 143 V158" stroke="#6b4f16" stroke-width="11" stroke-linecap="round"></path><ellipse cx="76" cy="166" rx="16" ry="8" fill="#6b4f16"></ellipse><ellipse cx="124" cy="166" rx="16" ry="8" fill="#6b4f16"></ellipse><circle cx="100" cy="100" r="49" fill="' + b + '" stroke="' + a + '" stroke-width="8"></circle><circle cx="100" cy="100" r="35" fill="none" stroke="' + belly + '" stroke-width="4"></circle>' + shine;
     }
     if (species.id === "electric") {
       if (level === 0) {
@@ -442,8 +447,13 @@ const KipCreature = (function () {
       }
       const spread = level === 1 ? 48 : level === 2 ? 54 : 60;
       const legs = '<g fill="none" stroke="' + b + '" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"><path d="M72 99 L' + (100 - spread) + ' 82 L' + (92 - spread) + ' 67 M68 113 L' + (94 - spread) + ' 113 L' + (84 - spread) + ' 130 M74 127 L' + (104 - spread) + ' 143 L' + (98 - spread) + ' 159 M128 99 L' + (100 + spread) + ' 82 L' + (108 + spread) + ' 67 M132 113 L' + (106 + spread) + ' 113 L' + (116 + spread) + ' 130 M126 127 L' + (96 + spread) + ' 143 L' + (102 + spread) + ' 159"></path></g>';
-      const horn = level === 1 ? '<path d="M92 75 L100 53 L108 75Z" fill="' + b + '" stroke="' + a + '" stroke-width="3"></path>' : level === 2 ? '<path d="M95 76 L106 49 L99 49 L108 30 L103 58 L111 58Z" fill="' + b + '" stroke="' + a + '" stroke-width="3" stroke-linejoin="round"></path>' : '<path d="M94 76 L108 45 L100 45 L112 18 L105 54 L114 54Z" fill="' + b + '" stroke="' + a + '" stroke-width="3" stroke-linejoin="round"></path>';
-      return legs + '<circle cx="100" cy="110" r="38" fill="' + b + '" stroke="' + a + '" stroke-width="4"></circle>' + horn;
+      const horn = level === 1 ? '<path d="M92 79 L100 55 L108 79Z" fill="' + b + '"></path>' : level === 2 ? '<path d="M104 46 L91 66 L100 66 L94 86 L116 59 L106 59Z" fill="' + b + '" stroke-linejoin="round"></path>' : '<path d="M107 36 L88 65 L100 65 L91 91 L120 55 L107 55Z" fill="' + b + '" stroke-linejoin="round"></path>';
+      const crabBody = level === 1
+        ? '<path d="M63 105 C66 83 82 73 100 77 C118 73 134 83 137 105 C146 111 143 130 130 137 C115 147 85 147 70 137 C57 130 54 111 63 105Z" fill="' + b + '" stroke="' + a + '" stroke-width="4"></path>'
+        : level === 2
+          ? '<path d="M55 106 C61 80 80 69 100 75 C120 69 139 80 145 106 L158 115 L145 128 C135 149 65 149 55 128 L42 115Z" fill="' + b + '" stroke="' + a + '" stroke-width="4"></path><path d="M50 108 L31 99 L25 113 L42 124 M150 108 L169 99 L175 113 L158 124" fill="none" stroke="' + b + '" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"></path>'
+          : '<path d="M47 108 C54 76 78 65 100 73 C123 65 147 76 153 108 L170 119 L153 134 C139 157 61 157 47 134 L30 119Z" fill="' + b + '" stroke="' + a + '" stroke-width="5"></path><path d="M43 105 L20 91 L11 109 L32 129 M157 105 L180 91 L189 109 L168 129" fill="none" stroke="' + b + '" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="61" cy="137" r="5" fill="#fff4a8" opacity=".8"></circle><circle cx="139" cy="137" r="5" fill="#fff4a8" opacity=".8"></circle>';
+      return legs + crabBody + horn;
     }
     return bodyByShape(species);
   }
@@ -509,7 +519,7 @@ const KipCreature = (function () {
     if (style === "pony") {
       return (
         '<path d="M33 49 C30 28 45 16 60 16 C76 16 90 29 87 51 L83 68 Q60 76 37 68 C33 62 31 56 33 49Z" fill="' + hair + '"></path>' +
-        '<ellipse cx="82" cy="47" rx="7" ry="6" fill="' + hair + '"></ellipse><path d="M86 48 C99 54 100 69 94 81 C88 91 91 100 84 112 C78 120 72 111 77 99 C83 84 82 70 88 61 C91 56 90 52 86 48Z" fill="' + hair + '"></path>'
+        '<ellipse cx="84" cy="49" rx="6" ry="5" fill="' + hair + '"></ellipse><path d="M88 49 C103 53 108 65 103 77 C99 87 104 97 99 108 C94 121 84 126 79 118 C76 112 83 103 84 95 C85 84 79 77 84 67 C89 58 95 56 88 49Z" fill="' + hair + '"></path>'
       );
     }
     if (style === "afro") {
