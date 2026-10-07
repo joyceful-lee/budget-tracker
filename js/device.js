@@ -7,18 +7,26 @@ const KipDevice = (function () {
   const INK = "#2a2140";
 
   // Keys are stored in saves, so a colorway can be recolored but its key stays.
+  /**
+   * Shell colors come from the Slicko-8 palette (lospec.com/palette-list/slicko-8); each colorway's
+   * pattern and buttons use other colors from the same palette.
+   */
   const COLORWAYS = {
-    bubblegum: { label: "Coral", shell: "#ff9a76", shell2: "#f2694a", accent: "#fff1c9", button: "#2fb5c9", bezel: "#fff8f2" },
-    lagoon: { label: "Lagoon", shell: "#4fd6e0", shell2: "#1fa6d9", accent: "#ffffff", button: "#ff8a3d", bezel: "#f2fdff" },
-    lemon: { label: "Lemon", shell: "#ffe45c", shell2: "#ffc21a", accent: "#ff8a3d", button: "#3d6bff", bezel: "#fffdf0" },
-    grape: { label: "Grape", shell: "#9f8cff", shell2: "#6c57e8", accent: "#7ff2ff", button: "#ffd23f", bezel: "#f6f4ff" },
-    mint: { label: "Mint", shell: "#7cf0c2", shell2: "#2fd39b", accent: "#ffffff", button: "#3d6bff", bezel: "#f3fff9" },
-    tangerine: { label: "Tangerine", shell: "#ffab5c", shell2: "#ff7a2f", accent: "#fff1c9", button: "#38c6e0", bezel: "#fff8ef" },
-    cherry: { label: "Cherry", shell: "#ff6b6b", shell2: "#e03b3b", accent: "#ffe3d6", button: "#ffd23f", bezel: "#fff6f3" },
-    sky: { label: "Sky", shell: "#9fd3ff", shell2: "#5aa8ff", accent: "#fff6a8", button: "#ff8a3d", bezel: "#f6fbff" },
-    lime: { label: "Lime", shell: "#d4f55b", shell2: "#9ad61f", accent: "#2f6b3a", button: "#ff8a3d", bezel: "#fbfff0" },
-    midnight: { label: "Midnight", shell: "#4f5bb8", shell2: "#2c3478", accent: "#ffd23f", button: "#38c6e0", bezel: "#eef0ff" }
+    amethyst: { label: "Amethyst", shell: "#8f43c6", shell2: "#8f43c6", accent: "#e8ea60", button: "#4ae3bf", bezel: "#f6fbd9" },
+    orchid: { label: "Orchid", shell: "#df4fcd", shell2: "#df4fcd", accent: "#f6fbd9", button: "#e8ea60", bezel: "#f6fbd9" },
+    amber: { label: "Amber", shell: "#ed9f2a", shell2: "#ed9f2a", accent: "#f6fbd9", button: "#5d51d7", bezel: "#f6fbd9" },
+    lemon: { label: "Lemon", shell: "#e8ea60", shell2: "#e8ea60", accent: "#ed9f2a", button: "#8f43c6", bezel: "#f6fbd9" },
+    mint: { label: "Mint", shell: "#4ae3bf", shell2: "#4ae3bf", accent: "#f6fbd9", button: "#df4fcd", bezel: "#f6fbd9" },
+    indigo: { label: "Indigo", shell: "#5d51d7", shell2: "#5d51d7", accent: "#4ae3bf", button: "#ed9f2a", bezel: "#f6fbd9" },
+    cream: { label: "Cream", shell: "#f6fbd9", shell2: "#f6fbd9", accent: "#df4fcd", button: "#5d51d7", bezel: "#ffffff" },
+    slick: { label: "Slick", shell: "#1e1a20", shell2: "#1e1a20", accent: "#8f43c6", button: "#e8ea60", bezel: "#f6fbd9" }
   };
+  /** Colorways from older saves map to the closest Slicko-8 colorway. */
+  const COLORWAY_ALIASES = {
+    bubblegum: "orchid", lagoon: "mint", lemon: "lemon", grape: "amethyst", mint: "mint",
+    tangerine: "amber", cherry: "orchid", sky: "indigo", lime: "lemon", midnight: "slick"
+  };
+
 
   const PATTERNS = ["dots", "stripes", "checks", "stars", "bolts", "waves", "confetti", "sparkles"];
   /** Patterns that were renamed, so older saves keep a matching look. */
@@ -99,7 +107,7 @@ const KipDevice = (function () {
     const d = device || {};
     return {
       shape: SHAPES[d.shape] ? d.shape : "egg",
-      colorway: COLORWAYS[d.colorway] ? d.colorway : "bubblegum",
+      colorway: COLORWAYS[d.colorway] ? d.colorway : COLORWAY_ALIASES[d.colorway] || "orchid",
       pattern: PATTERNS.indexOf(PATTERN_ALIASES[d.pattern] || d.pattern) !== -1 ? (PATTERN_ALIASES[d.pattern] || d.pattern) : "dots"
     };
   }
@@ -201,12 +209,12 @@ const KipDevice = (function () {
       "</defs>";
 
     // A 4px stroke under the fills leaves a 2px border outside the shell at any size.
-    svg += '<g fill="none" stroke="' + darken(c.shell2, 0.3) + '" stroke-width="4" stroke-linejoin="round" vector-effect="non-scaling-stroke">' + shape.body + "</g>" +
+    svg += '<g fill="none" stroke="' + darken(c.shell2, 0.2) + '" stroke-width="4" stroke-linejoin="round" vector-effect="non-scaling-stroke">' + shape.body + "</g>" +
       '<g fill="url(#' + uid + 'g)">' + shape.body + "</g>" +
       '<g fill="url(#' + uid + 'p)" opacity=".55">' + shape.body + "</g>" +
       (shape.extra ? shape.extra(c) : "") +
       '<g clip-path="url(#' + uid + 'c)"><ellipse cx="96" cy="96" rx="96" ry="70" fill="url(#' + uid + 'h)"/>' +
-      '<ellipse cx="150" cy="380" rx="200" ry="70" fill="' + INK + '" opacity=".12"/></g>' +
+      '<ellipse cx="150" cy="380" rx="200" ry="70" fill="' + INK + '" opacity=".05"/></g>' +
       '<rect x="' + (s.x - bz) + '" y="' + (s.y - bz + 3) + '" width="' + (s.w + bz * 2) + '" height="' + (s.h + bz * 2) + '" rx="24" fill="' + INK + '" opacity=".18"/>' +
       '<rect x="' + (s.x - bz) + '" y="' + (s.y - bz) + '" width="' + (s.w + bz * 2) + '" height="' + (s.h + bz * 2) + '" rx="24" fill="' + c.bezel + '"/>';
 
@@ -238,6 +246,7 @@ const KipDevice = (function () {
     NAME,
     NAME_PLURAL,
     COLORWAYS,
+    resolve,
     SHAPES,
     PATTERNS,
     randomDevice,

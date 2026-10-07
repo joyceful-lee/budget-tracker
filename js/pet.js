@@ -40,6 +40,8 @@
   // Remember whether the pet was alive at the last render so a death pops the revive modal once.
   let wasAlive = null;
   let screen = null;
+  // Species with ASCII art draw as colored text; the rest keep their SVG art for now.
+  let textScreen = null;
   let feedBtn = null;
   let playBtn = null;
   let spendBtn = null;
@@ -103,7 +105,7 @@
     });
 
     // Tint the page with the device's colors.
-    const c = KipDevice.COLORWAYS[pet.device.colorway] || KipDevice.COLORWAYS.bubblegum;
+    const c = KipDevice.COLORWAYS[KipDevice.resolve(pet.device).colorway];
     document.body.style.setProperty("--page", "color-mix(in srgb, " + c.shell + " 24%, #fffaf0)");
     document.body.style.setProperty("--dot-a", "color-mix(in srgb, " + c.shell + " 45%, #ffffff)");
     document.body.style.setProperty("--dot-b", "color-mix(in srgb, " + c.button + " 40%, #ffffff)");
@@ -176,7 +178,12 @@
 
     document.title = pet.petName;
     document.querySelectorAll("[data-revive-label]").forEach(function (el) { el.textContent = "Revive " + pet.petName; });
-    screen.innerHTML = KipDevice.screenMarkup(pet);
+    if (KipScreen.supports(pet)) {
+      if (textScreen) textScreen.update(pet);
+      else textScreen = KipScreen.mount(screen, pet);
+    } else {
+      screen.innerHTML = KipDevice.screenMarkup(pet);
+    }
     petNameDisplay.textContent = pet.petName + ", saving for " + pet.goal.label;
     if (titleName.textContent !== pet.petName) {
       titleName.textContent = pet.petName;
@@ -213,6 +220,10 @@
   }
 
   function celebrate(action) {
+    if (textScreen) {
+      textScreen.act(action);
+      return;
+    }
     const wrap = screen.querySelector(".lcd-pet");
     if (!wrap) return;
     wrap.classList.add("is-happy", "care-" + action);

@@ -266,6 +266,27 @@ p { margin: 0 0 1rem; }
 .device-btn:disabled + .device-btn-label { opacity: 0.45; }
 
 /* LCD screen */
+.lcd-ascii-wrap { position: absolute; inset: 0; background: #000; }
+.lcd-ascii-status {
+  position: absolute;
+  left: 5%;
+  right: 5%;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  letter-spacing: 1px;
+  font-family: ui-monospace, "Cascadia Mono", Consolas, Menlo, "Courier New", monospace;
+  font-weight: 700;
+  line-height: 1;
+  white-space: pre;
+}
+.lcd-blocks {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  image-rendering: pixelated;
+}
 .lcd {
   position: absolute;
   inset: 0;

@@ -31,11 +31,25 @@
     });
   });
 
+  // ASCII screens animate on timers, so each gallery rebuild stops the previous ones first.
+  let mountedScreens = [];
+
+  /** Draw a pet on a device screen: ASCII art where available, the older art otherwise. */
+  function showPet(screenEl, pet) {
+    if (KipScreen.supports(pet)) {
+      const screen = KipScreen.mount(screenEl, pet);
+      mountedScreens.push(screen);
+      return screen;
+    }
+    screenEl.innerHTML = KipDevice.screenMarkup(pet);
+    return null;
+  }
+
   function nestieCard(pet) {
     const card = document.createElement("a");
     card.className = "nestie-card" + (pet.creature.alive ? "" : " is-dead");
     card.href = "pet.html?id=" + encodeURIComponent(pet.id);
-    card.innerHTML = KipDevice.markup(pet.device, { screen: KipDevice.screenMarkup(pet) }) +
+    card.innerHTML = KipDevice.markup(pet.device, {}) +
       '<div class="nestie-plate panel"><h2 class="nestie-name"></h2><p class="nestie-goal"></p>' +
       '<div class="mini-xp"><span></span></div><p class="nestie-status"></p></div>';
     card.querySelector(".nestie-name").textContent = pet.petName;
@@ -43,11 +57,14 @@
     card.querySelector(".mini-xp span").style.width = Math.round(KipFinance.progress(pet) * 100) + "%";
     card.querySelector(".nestie-status").textContent = KipCreature.statusLine(pet);
     card.setAttribute("aria-label", pet.petName + ", saving for " + pet.goal.label);
+    showPet(card.querySelector(".device-screen"), pet);
     return card;
   }
 
   function render() {
     const data = KipCreature.sync();
+    mountedScreens.forEach(function (screen) { screen.destroy(); });
+    mountedScreens = [];
     grid.innerHTML = "";
     data.pets.forEach(function (pet) { grid.appendChild(nestieCard(pet)); });
 
@@ -120,8 +137,9 @@
     window.setTimeout(function () {
       const id = KipCreature.hatch(petName, device, goal);
       const pet = KipStorage.findPet(KipStorage.load(), id);
-      setHatchScreen(KipDevice.screenMarkup(pet));
-      hatchDevice.querySelector(".lcd-pet").classList.add("is-happy");
+      const screen = showPet(hatchDevice.querySelector(".device-screen"), pet);
+      if (screen) screen.act("play");
+      else hatchDevice.querySelector(".lcd-pet").classList.add("is-happy");
       hatchText.textContent = "Say hello to " + petName + ".";
       window.setTimeout(function () {
         window.location.href = "pet.html?id=" + encodeURIComponent(id);
