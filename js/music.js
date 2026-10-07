@@ -15,12 +15,9 @@
 
   function creatureMood() {
     const data = KipStorage.load();
-    const c = data.creature || {};
-    const happiness = ([c.hunger, c.joy, c.energy, c.tidy].reduce(function (sum, n) {
-      return sum + (Number(n) || 0);
-    }, 0)) / 4;
-    if (happiness >= 70) return { name: "happy", tempo: 760, wave: "sine" };
-    if (happiness >= 40) return { name: "calm", tempo: 980, wave: "triangle" };
+    const mood = data.onboarded ? KipCreature.mood(data) : "okay";
+    if (mood === "happy") return { name: "happy", tempo: 760, wave: "sine" };
+    if (mood === "okay") return { name: "calm", tempo: 980, wave: "triangle" };
     return { name: "tender", tempo: 1220, wave: "sine" };
   }
 
@@ -56,7 +53,7 @@
     toggle.setAttribute("aria-pressed", enabled ? "true" : "false");
     toggle.textContent = enabled ? "♪ Music on" : "♪ Music off";
     toggle.title = enabled
-      ? "Music is adapting to your creature's happiness"
+      ? "Music is adapting to how well fed your pet is"
       : "Turn the adaptive background music on";
   }
 

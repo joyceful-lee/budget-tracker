@@ -1,5 +1,5 @@
 const KipStorage = (function () {
-  const KEY = "kips-nest-data-v3";
+  const KEY = "kips-nest-data-v4";
 
   const SPECIES = {
     air: {
@@ -122,41 +122,27 @@ const KipStorage = (function () {
     { id: "mystery-c", label: "Mystery egg", shell: "#f2e7c9", speck: "#b99d70", pool: HATCH_POOL }
   ];
 
-  const COSMETICS = [
-    { id: "nest-pillow", type: "nest", name: "Soft pillow", cost: 4, joyBonus: 6, desc: "A comfy cushion for the nest." },
-    { id: "nest-lantern", type: "nest", name: "Glow lantern", cost: 6, joyBonus: 8, desc: "A whimsical star lantern with a warm glow." },
-    { id: "nest-bloom", type: "nest", name: "Bloom ring", cost: 5, joyBonus: 7, desc: "A full garland of flowers around the nest rim." },
-    { id: "acc-bow", type: "accessory", name: "Sunny bow", cost: 3, joyBonus: 5, desc: "A cheerful bow for your pet." },
-    { id: "acc-scarf", type: "accessory", name: "Leaf necktie", cost: 4, joyBonus: 6, desc: "A real leaf-shaped tie with a tiny stem." },
-    { id: "acc-hat", type: "accessory", name: "Cloud hat", cost: 5, joyBonus: 7, desc: "A tiny fluffy cloud resting overhead." }
-  ];
-
   function defaultData() {
     return {
       onboarded: false,
       petName: "",
       eggId: "",
       speciesId: "",
+      goal: null,
       transactions: [],
-      savingsGoal: null,
-      upcoming: [],
-      tokens: 3,
-      flowers: 8,
-      ownedCosmetics: [],
-      equippedNest: "",
-      equippedAccessory: "",
-      cosmeticColors: {},
       memories: {},
-      retiredCreatures: [],
+      pastPets: [],
       lastRetiredSpecies: "",
       creature: {
-        hunger: 72,
-        joy: 70,
-        energy: 68,
-        tidy: 74,
         age: "baby",
-        careCount: 0,
-        lastTick: Date.now()
+        fullness: 100,
+        lastTick: Date.now(),
+        starvingSince: null,
+        alive: true,
+        diedAt: null,
+        deathReason: "",
+        revives: 0,
+        completedAt: null
       }
     };
   }
@@ -172,9 +158,9 @@ const KipStorage = (function () {
       const parsed = JSON.parse(raw);
       return Object.assign(defaultData(), parsed, {
         creature: Object.assign(defaultData().creature, parsed.creature || {}),
-        cosmeticColors: Object.assign({}, parsed.cosmeticColors || {}),
         memories: Object.assign({}, parsed.memories || {}),
-        retiredCreatures: Array.isArray(parsed.retiredCreatures) ? parsed.retiredCreatures : []
+        transactions: Array.isArray(parsed.transactions) ? parsed.transactions : [],
+        pastPets: Array.isArray(parsed.pastPets) ? parsed.pastPets : []
       });
     } catch (err) {
       const fresh = defaultData();
@@ -218,20 +204,6 @@ const KipStorage = (function () {
     return result;
   }
 
-  function cosmeticBonus(data) {
-    let bonus = 0;
-    COSMETICS.forEach(function (item) {
-      if (data.equippedNest === item.id || data.equippedAccessory === item.id) {
-        bonus += item.joyBonus;
-      }
-    });
-    return bonus;
-  }
-
-  function getCosmetic(id) {
-    return COSMETICS.find(function (c) { return c.id === id; }) || null;
-  }
-
   function brandName(data, suffix) {
     const name = (data && data.petName) ? data.petName : "Nest";
     return name + "'s " + suffix;
@@ -241,7 +213,6 @@ const KipStorage = (function () {
     KEY,
     SPECIES,
     EGGS,
-    COSMETICS,
     load,
     save,
     update,
@@ -250,8 +221,6 @@ const KipStorage = (function () {
     getSpecies,
     getEgg,
     hatchSpecies,
-    cosmeticBonus,
-    getCosmetic,
     brandName
   };
 })();

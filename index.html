@@ -8,29 +8,39 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=20261004a">
+  <link rel="stylesheet" href="css/styles.css?v=20261006a">
 </head>
 <body class="page-home">
   <header class="site-header header-over-hero">
     <a class="brand" href="index.html" data-brand="nest">Nest Friend</a>
     <nav class="site-nav" aria-label="Main">
-      <a href="index.html" aria-current="page">Home</a>
-      <a href="budget.html">Money Journal</a>
+      <button type="button" class="music-toggle" id="music-toggle" aria-pressed="false" title="Turn the adaptive background music on">♪ Music off</button>
       <button type="button" class="nav-reset" data-reset-game>Reset game</button>
     </nav>
-    <button type="button" class="music-toggle" id="music-toggle" aria-pressed="false" title="Turn the adaptive background music on">♪ Music off</button>
   </header>
 
   <div class="modal" id="onboard-modal" hidden>
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="onboard-title">
       <p class="brand-mark modal-brand">Nest Friend</p>
-      <h2 id="onboard-title">Name your friend and pick a mystery egg</h2>
-      <p class="modal-copy">Every egg looks alike. One of eight elemental friends—or a very rare hidden friend—will choose you at random.</p>
+      <h2 id="onboard-title">Set a savings goal and hatch a friend</h2>
+      <p class="modal-copy">Your pet grows as you save. It evolves at 50% of your goal and reaches its final form at 100%. Log money in to keep it fed!</p>
 
-      <label class="field-label">
-        Pet name
-        <input type="text" id="pet-name-input" maxlength="18" placeholder="Pip" autocomplete="off">
-      </label>
+      <form id="onboard-form" class="entry-form onboard-form" novalidate>
+        <label>What are you saving for?
+          <input type="text" name="goal" maxlength="60" placeholder="New bike" autocomplete="off">
+        </label>
+        <div class="field-pair">
+          <label>Goal amount
+            <input type="number" name="target" min="1" step="0.01" placeholder="200.00">
+          </label>
+          <label>Deadline
+            <input type="date" name="deadline">
+          </label>
+        </div>
+        <label>Pet name
+          <input type="text" name="petName" maxlength="18" placeholder="Pip" autocomplete="off">
+        </label>
+      </form>
 
       <p class="field-label">Choose an egg</p>
       <div class="egg-grid" id="egg-grid" role="listbox" aria-label="Egg choices"></div>
@@ -41,67 +51,56 @@
   </div>
 
   <main class="nest-layout" id="nest-layout" hidden>
-    <aside class="stats-rail" aria-label="Pet stats">
+    <aside class="stats-rail" aria-label="Goal and journal">
       <div class="pet-id">
         <p class="eyebrow" id="pet-species-label">Baby</p>
         <h1 id="pet-name-display">Friend</h1>
-        <p class="nest-vibe"><span>Nest vibe</span> <strong id="vitality-text">Warming up</strong></p>
+        <p class="goal-name">Saving for <strong id="goal-label">—</strong></p>
       </div>
 
-      <div class="stat-meters" aria-label="Wellbeing">
-        <div class="meter">
-          <div class="meter-top"><span>Fullness</span><span id="stat-hunger">0</span></div>
-          <div class="meter-track"><div class="meter-fill" id="fill-hunger"></div></div>
+      <section class="goal-card" aria-label="Goal progress">
+        <p class="goal-amount"><strong id="goal-saved">$0.00</strong> <span>of <span id="goal-target">$0.00</span></span></p>
+        <div class="xp-track" aria-hidden="true">
+          <div class="xp-fill" id="xp-fill"></div>
+          <span class="xp-mark" style="left:50%"></span>
         </div>
-        <div class="meter">
-          <div class="meter-top"><span>Joy</span><span id="stat-joy">0</span></div>
-          <div class="meter-track"><div class="meter-fill" id="fill-joy"></div></div>
-        </div>
-        <div class="meter">
-          <div class="meter-top"><span>Energy</span><span id="stat-energy">0</span></div>
-          <div class="meter-track"><div class="meter-fill" id="fill-energy"></div></div>
-        </div>
-        <div class="meter">
-          <div class="meter-top"><span>Tidy</span><span id="stat-tidy">0</span></div>
-          <div class="meter-track"><div class="meter-fill" id="fill-tidy"></div></div>
-        </div>
+        <div class="xp-legend"><span>Hatched</span><span>Evolves · 50%</span><span>Final · 100%</span></div>
+        <p class="goal-deadline" id="goal-deadline"></p>
+      </section>
+
+      <div class="meter">
+        <div class="meter-top"><span>Fullness</span><span id="stat-fullness">0</span></div>
+        <div class="meter-track"><div class="meter-fill" id="fill-fullness"></div></div>
+        <p class="meter-hint" id="meal-hint"></p>
       </div>
 
       <div class="token-row compact">
-        <span>Nest tokens</span>
-        <strong id="token-count">0</strong>
+        <span>Times revived</span>
+        <strong id="revive-count">0</strong>
       </div>
-      <div class="token-row compact flower-row">
-        <span>Flowers</span>
-        <strong id="flower-count-home">0</strong>
-      </div>
-      <p class="care-feedback" id="care-feedback" aria-live="polite"></p>
-      <p class="wellbeing-link"><strong>Wellbeing link:</strong> 65% daily care + 35% Money Journal health. A stronger budget also slows stat decay and earns care tokens.</p>
 
-      <div class="nest-shop" id="nest-shop">
-        <button type="button" class="shop-toggle" id="shop-toggle" aria-expanded="false">
-          Flower shop
-          <span class="shop-toggle-hint" id="shop-toggle-hint">Open</span>
-        </button>
-        <div class="shop-panel" id="shop-panel" hidden>
-          <p class="shop-note">Preview an item, choose its color, then buy it with flowers. Equipped items raise joy.</p>
-          <div id="shop-list" class="shop-list"></div>
-          <div class="shop-preview-bar" id="shop-preview-bar" hidden>
-            <p id="preview-label">Previewing</p>
-            <button type="button" class="shelf-btn" id="preview-buy">Buy</button>
-            <button type="button" class="btn btn-soft" id="preview-cancel">Cancel preview</button>
-          </div>
-        </div>
+      <p class="care-feedback" id="care-feedback" aria-live="polite"></p>
+
+      <div class="rail-actions" id="rail-actions">
+        <button type="button" class="btn btn-primary" data-open-money="in">Money in · Feed</button>
+        <button type="button" class="btn btn-soft" data-open-money="out">Money out</button>
       </div>
+      <div class="rail-actions" id="revive-actions" hidden>
+        <button type="button" class="btn btn-primary" id="open-revive"><span data-revive-label>Revive</span></button>
+      </div>
+      <div class="rail-actions" id="complete-actions" hidden>
+        <button type="button" class="btn btn-primary" id="new-goal-btn">Start a new goal</button>
+      </div>
+
+      <section class="journal" aria-labelledby="journal-title">
+        <h2 id="journal-title">Money journal</h2>
+        <ul class="entry-list" id="journal-list"></ul>
+      </section>
 
       <button type="button" class="memory-box-button" id="memory-box-open">
         <span aria-hidden="true">✦</span>
-        <span><strong>Memory Box</strong><small>Creature stages you have unlocked</small></span>
+        <span><strong>Memory Box</strong><small>Past pets and growth stages</small></span>
       </button>
-
-      <div class="rail-links">
-        <a class="btn btn-soft" href="budget.html">Money Journal</a>
-      </div>
     </aside>
 
     <section class="nest-stage" aria-label="Pet habitat">
@@ -121,20 +120,17 @@
       <div class="nest-focal">
         <div class="care-effect" id="care-effect" aria-hidden="true"></div>
         <div class="care-orbit nest-orbit">
-          <button type="button" class="orbit-btn orbit-left-top" data-care="feed" aria-label="Feed"><span>Feed</span></button>
-          <button type="button" class="orbit-btn orbit-left-bottom" data-care="play" aria-label="Play"><span>Play</span></button>
-          <button type="button" class="orbit-btn orbit-right-top" data-care="rest" aria-label="Rest"><span>Rest</span></button>
-          <button type="button" class="orbit-btn orbit-right-bottom" data-care="tidy" aria-label="Tidy"><span>Tidy</span></button>
+          <button type="button" class="orbit-btn orbit-left-top" id="orbit-feed" data-open-money="in" aria-label="Feed by logging money in"><span>Feed</span></button>
+          <button type="button" class="orbit-btn orbit-right-top" id="orbit-play" aria-label="Play"><span>Play</span></button>
         </div>
 
         <div class="nest-stack">
           <div class="creature-wrap on-nest" id="creature-wrap">
             <div id="creature-svg-host"></div>
           </div>
-          <div class="nest-bed" id="nest-bed">
+          <div class="nest-bed">
             <div class="nest-rim"></div>
             <div class="nest-inner"></div>
-            <div class="nest-decor" id="nest-decor"></div>
           </div>
           <p class="creature-speech under-nest" id="creature-speech" aria-live="polite"></p>
         </div>
@@ -142,12 +138,50 @@
     </section>
   </main>
 
+  <div class="modal" id="money-modal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="money-modal-title">
+      <button type="button" class="modal-close" data-close="money-modal" aria-label="Close">Close</button>
+      <h2 id="money-modal-title">Log money</h2>
+      <div class="tab-row" role="tablist">
+        <button type="button" class="tab is-active" data-tab="in">Money in</button>
+        <button type="button" class="tab" data-tab="out">Money out</button>
+      </div>
+      <form id="form-money-in" class="entry-form tab-panel" data-panel="in">
+        <p class="modal-copy" id="money-in-copy">Money in counts toward your goal and feeds your pet.</p>
+        <label>What is it?<input type="text" name="label" maxlength="60" required placeholder="Saturday allowance"></label>
+        <label>How much?<input type="number" name="amount" min="0.01" step="0.01" required placeholder="10.00"></label>
+        <button type="submit" class="btn btn-primary">Save it &amp; feed</button>
+      </form>
+      <form id="form-money-out" class="entry-form tab-panel" data-panel="out" hidden>
+        <p class="modal-copy">Money out is kept in your journal. It doesn't lower your pet's XP.</p>
+        <label>What is it?<input type="text" name="label" maxlength="60" required placeholder="Movie ticket"></label>
+        <label>How much?<input type="number" name="amount" min="0.01" step="0.01" required placeholder="5.00"></label>
+        <button type="submit" class="btn btn-primary">Take it out</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal" id="revive-modal" hidden>
+    <div class="modal-card growth-card" role="dialog" aria-modal="true" aria-labelledby="revive-title">
+      <button type="button" class="modal-close" data-close="revive-modal" aria-label="Close">Close</button>
+      <p class="eyebrow">Oh no</p>
+      <h2 id="revive-title">Your friend has passed away</h2>
+      <div class="growth-reveal is-dead" id="revive-portrait"></div>
+      <p id="revive-copy"></p>
+      <form id="revive-form" class="entry-form">
+        <label id="revive-deadline-wrap">New deadline<input type="date" name="deadline"></label>
+        <p class="modal-error" id="revive-error" aria-live="polite"></p>
+        <button type="submit" class="btn btn-primary"><span data-revive-label>Revive</span></button>
+      </form>
+      <button type="button" class="link-btn" id="release-btn">Let them rest and start a new goal</button>
+    </div>
+  </div>
+
   <div class="modal" id="memory-modal" hidden>
     <div class="modal-card memory-card wide" role="dialog" aria-modal="true" aria-labelledby="memory-title">
-      <button type="button" class="modal-close" id="memory-close" aria-label="Close memory box">Close</button>
+      <button type="button" class="modal-close" data-close="memory-modal" aria-label="Close memory box">Close</button>
       <p class="eyebrow">Keepsakes</p>
       <h2 id="memory-title">Memory Box</h2>
-      <p class="modal-copy">Each creature and growth stage has a permanent place. Silhouettes are memories still waiting to be made.</p>
       <div class="memory-grid" id="memory-grid"></div>
     </div>
   </div>
@@ -159,18 +193,18 @@
 
   <div class="modal" id="growth-modal" hidden>
     <div class="modal-card growth-card" role="dialog" aria-modal="true" aria-labelledby="growth-title">
-      <p class="eyebrow">A new memory!</p>
+      <p class="eyebrow" id="growth-eyebrow">A new memory!</p>
       <h2 id="growth-title">Your friend grew!</h2>
       <div class="growth-reveal" id="growth-reveal"></div>
       <p id="growth-copy"></p>
-      <button type="button" class="btn btn-primary" id="growth-close">Meet this new stage</button>
+      <button type="button" class="btn btn-primary" data-close="growth-modal">Yay!</button>
     </div>
   </div>
 
-  <script src="js/storage.js?v=20261003c"></script>
-  <script src="js/finance.js?v=20261003c"></script>
-  <script src="js/creature.js?v=20261004a"></script>
-  <script src="js/main.js?v=20261003c"></script>
-  <script src="js/music.js?v=20261003a"></script>
+  <script src="js/storage.js?v=20261006a"></script>
+  <script src="js/finance.js?v=20261006a"></script>
+  <script src="js/creature.js?v=20261006a"></script>
+  <script src="js/main.js?v=20261006a"></script>
+  <script src="js/music.js?v=20261006a"></script>
 </body>
 </html>

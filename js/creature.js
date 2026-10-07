@@ -1,16 +1,21 @@
 const KipCreature = (function () {
-  const CARE = {
-    feed: { stat: "hunger", boost: 22, speech: "That snack hit the spot!" },
-    play: { stat: "joy", boost: 22, speech: "Let's tumble in the leaves!" },
-    rest: { stat: "energy", boost: 24, speech: "A cozy nap fixes everything." },
-    tidy: { stat: "tidy", boost: 22, speech: "Nest feels fresh again." }
-  };
+  /** Every species has art for four ages; a goal pet uses the first three. */
   const AGE_STAGES = ["baby", "teen", "adult", "elderly"];
+  const GOAL_STAGES = ["baby", "teen", "adult"];
+  const HOUR_MS = 3600000;
+  /** How long a pet can sit at zero fullness before it dies. */
+  const STARVE_GRACE_HOURS = 24;
 
-  function stageForCare(count) {
-    if (count >= 15) return "elderly";
-    if (count >= 9) return "adult";
-    if (count >= 4) return "teen";
+  const PLAY_LINES = [
+    "Let's tumble in the leaves!",
+    "Tag, you're it!",
+    "Again, again!",
+    "Watch me spin!"
+  ];
+
+  function stageForProgress(p) {
+    if (p >= 1) return "adult";
+    if (p >= 0.5) return "teen";
     return "baby";
   }
 
@@ -28,230 +33,187 @@ const KipCreature = (function () {
   }
 
   function clamp(n) {
-    return Math.max(0, Math.min(100, Math.round(n)));
+    return Math.max(0, Math.min(100, n));
   }
 
-  function tickDecay(data) {
-    const now = Date.now();
-    const last = data.creature.lastTick || now;
-    const hours = Math.min(48, (now - last) / 3600000);
-    if (hours < 0.15) return data;
-
-    const health = KipFinance.healthScore(data);
-    const rate = health >= 70 ? 2.2 : health >= 45 ? 3.4 : 5.2;
-    const loss = hours * rate;
-
-    data.creature.hunger = clamp(data.creature.hunger - loss);
-    data.creature.joy = clamp(data.creature.joy - loss * 0.9);
-    data.creature.energy = clamp(data.creature.energy - loss * 1.05);
-    data.creature.tidy = clamp(data.creature.tidy - loss * 0.8);
-    data.creature.lastTick = now;
-    return data;
+  function isComplete(data) {
+    return !!data.creature.completedAt;
   }
 
-  function maybeGrantVisitTokens(data) {
-    if (!data.onboarded) return data;
-    const today = new Date().toISOString().slice(0, 10);
-    if (data.lastTokenDay === today) return data;
-    const grant = KipFinance.tokenGrantFromHealth(KipFinance.healthScore(data));
-    data.tokens = (data.tokens || 0) + grant;
-    data.lastTokenDay = today;
-    data.lastTokenGrant = grant;
-    return data;
-  }
-
-  function sync() {
-    return KipStorage.update(function (data) {
-      tickDecay(data);
-      maybeGrantVisitTokens(data);
-    });
-  }
-
-  function qualityOfLife(data) {
+  function die(data, reason, at) {
     const c = data.creature;
-    const base = (c.hunger + c.joy + c.energy + c.tidy) / 4;
-    const bonus = KipStorage.cosmeticBonus(data);
-    return Math.round(Math.min(100, base + bonus * 0.35));
+    c.alive = false;
+    c.deathReason = reason;
+    c.diedAt = at;
   }
 
-  function mood(data) {
-    const qol = qualityOfLife(data);
-    const health = KipFinance.healthScore(data);
-    const blended = Math.round(qol * 0.65 + health * 0.35);
-    if (blended >= 75) return "happy";
-    if (blended >= 45) return "okay";
-    return "sad";
-  }
-
-  function speechForState(data) {
-    const name = data.petName || "Hi";
-    const m = mood(data);
-    const health = KipFinance.healthScore(data);
-    const qol = qualityOfLife(data);
-    const decor = KipStorage.cosmeticBonus(data);
-
-    if (m === "happy") {
-      if (decor > 0) return name + " loves the nest upgrades you bought!";
-      return health >= 70
-        ? name + " loves this sunny nest vibe!"
-        : name + " feels wonderful thanks to your care!";
+  /** Advance hunger to now and apply starvation or a missed deadline. */
+  function tick(data) {
+    const c = data.creature;
+    const now = Date.now();
+    if (!data.onboarded || !data.goal || !c.alive || isComplete(data)) {
+      c.lastTick = now;
+      return data;
     }
-    if (m === "okay") {
-      if (qol < 55) return name + " could use care or a flower shop treat.";
-      return name + " is doing alright. Keep the journal and care going.";
+
+    const last = c.lastTick || now;
+    const perHour = 100 / KipFinance.hoursToEmpty(data, last);
+    const before = c.fullness;
+    c.fullness = clamp(before - perHour * (now - last) / HOUR_MS);
+    if (c.fullness <= 0 && !c.starvingSince) {
+      c.starvingSince = Math.round(last + (before / perHour) * HOUR_MS);
     }
-    if (health < 35) return "The nest feels drafty. Check your Money Journal.";
-    return name + " is a bit wilted. Feed, play, rest, or tidy.";
+    c.lastTick = now;
+
+    const starvedAt = c.starvingSince ? c.starvingSince + STARVE_GRACE_HOURS * HOUR_MS : Infinity;
+    const dueAt = KipFinance.deadlineEnd(data.goal);
+    if (starvedAt <= now && starvedAt <= dueAt) die(data, "starved", starvedAt);
+    else if (dueAt <= now) die(data, "deadline", dueAt);
+    return data;
   }
 
-  function care(action) {
-    const config = CARE[action];
-    if (!config) return { ok: false, message: "Unknown care action." };
-    let result = { ok: false, message: "" };
-
-    KipStorage.update(function (data) {
-      tickDecay(data);
-      if ((data.tokens || 0) < 1) {
-        result = {
-          ok: false,
-          message: "You need a nest token. Improve your journal to earn more."
-        };
-        return;
-      }
-      data.tokens -= 1;
-      data.creature[config.stat] = clamp(data.creature[config.stat] + config.boost);
-      if (action === "play") {
-        data.creature.energy = clamp(data.creature.energy - 4);
-        data.creature.joy = clamp(data.creature.joy + 4);
-      }
-      if (action === "rest") data.creature.hunger = clamp(data.creature.hunger - 3);
-      data.creature.careCount = (data.creature.careCount || 0) + 1;
-      const previousAge = data.creature.age || "baby";
-      data.creature.age = stageForCare(data.creature.careCount);
-      recordMemory(data, data.creature.age);
-      data.creature.lastTick = Date.now();
-      if (data.creature.age !== previousAge) {
-        result = {
-          ok: true,
-          grew: true,
-          message: data.petName + " grew into the " + data.creature.age + " stage! A memory was unlocked.",
-          speech: "A new chapter!"
-        };
-      } else {
-        result = { ok: true, message: config.speech, speech: config.speech };
-      }
-
-      if (data.creature.age === "elderly" && data.creature.careCount >= 18) {
-        recordMemory(data, "elderly");
-        data.retiredCreatures = data.retiredCreatures || [];
-        data.retiredCreatures.push({
-          id: KipStorage.uid(),
-          speciesId: data.speciesId,
-          petName: data.petName,
-          retiredAt: Date.now()
-        });
-        data.lastRetiredSpecies = data.speciesId;
-        data.onboarded = false;
-        result = {
-          ok: true,
-          retired: true,
-          message: data.petName + " retired into the Memory Box. A new mystery egg is ready!",
-          speech: "Keep our memories safe."
-        };
-      }
-    });
+  /** Evolve and complete based on saved progress. Pets never de-evolve. */
+  function checkGrowth(data) {
+    const result = { grew: false, completed: false };
+    if (!data.creature.alive || isComplete(data)) return result;
+    const p = KipFinance.progress(data);
+    const target = stageForProgress(p);
+    if (GOAL_STAGES.indexOf(target) > GOAL_STAGES.indexOf(data.creature.age)) {
+      data.creature.age = target;
+      recordMemory(data, target);
+      result.grew = true;
+    }
+    if (p >= 1) {
+      data.creature.completedAt = Date.now();
+      data.creature.fullness = 100;
+      data.creature.starvingSince = null;
+      result.completed = true;
+    }
     return result;
   }
 
-  function hatch(petName, eggId) {
+  function sync() {
+    return KipStorage.update(tick);
+  }
+
+  function hatch(petName, eggId, goal) {
     return KipStorage.update(function (data) {
-      const speciesId = KipStorage.hatchSpecies(eggId, data);
+      data.speciesId = KipStorage.hatchSpecies(eggId, data);
       data.onboarded = true;
       data.petName = petName;
       data.eggId = eggId;
-      data.speciesId = speciesId;
-      data.tokens = 3;
-      data.flowers = 8;
-      data.creature = {
-        hunger: 80,
-        joy: 80,
-        energy: 80,
-        tidy: 80,
-        age: "baby",
-        careCount: 0,
-        lastTick: Date.now()
-      };
+      data.goal = goal;
+      data.transactions = [];
+      data.creature = KipStorage.defaultData().creature;
       recordMemory(data, "baby");
     });
   }
 
-  function buyCosmetic(itemId) {
-    const item = KipStorage.getCosmetic(itemId);
-    if (!item) return { ok: false, message: "Item not found." };
-    let result = { ok: false, message: "" };
+  /** Log money in or out. Money in also feeds the pet. A dead pet blocks logging until revived. */
+  function logMoney(type, label, amount) {
+    let result = { ok: false, fed: 0, grew: false, completed: false };
     KipStorage.update(function (data) {
-      if ((data.ownedCosmetics || []).indexOf(itemId) !== -1) {
-        result = { ok: false, message: "You already own that." };
-        return;
+      tick(data);
+      if (!data.creature.alive) return;
+      result.ok = true;
+      data.transactions.push({
+        id: KipStorage.uid(),
+        type: type,
+        label: label,
+        amount: amount,
+        date: KipFinance.todayIso()
+      });
+      const c = data.creature;
+      if (type === "in" && !isComplete(data)) {
+        const points = KipFinance.feedPoints(data, amount);
+        c.fullness = clamp(c.fullness + points);
+        c.starvingSince = null;
+        result.fed = points;
       }
-      if ((data.flowers || 0) < item.cost) {
-        result = { ok: false, message: "Need " + item.cost + " flowers." };
-        return;
-      }
-      data.flowers -= item.cost;
-      data.ownedCosmetics = data.ownedCosmetics || [];
-      data.ownedCosmetics.push(itemId);
-      if (item.type === "nest") data.equippedNest = itemId;
-      else data.equippedAccessory = itemId;
-      data.creature.joy = clamp(data.creature.joy + item.joyBonus);
-      result = {
-        ok: true,
-        message: "Bought " + item.name + "! " + data.petName + " looks happier."
-      };
+      Object.assign(result, checkGrowth(data));
     });
     return result;
   }
 
-  function equipCosmetic(itemId) {
-    const item = KipStorage.getCosmetic(itemId);
-    if (!item) return;
+  function removeTransaction(id) {
     KipStorage.update(function (data) {
-      if ((data.ownedCosmetics || []).indexOf(itemId) === -1) return;
-      if (item.type === "nest") data.equippedNest = itemId;
-      else data.equippedAccessory = itemId;
+      if (!data.creature.alive) return;
+      data.transactions = data.transactions.filter(function (t) { return t.id !== id; });
     });
   }
 
-  function accessoryMarkup(data) {
-    const id = data.equippedAccessory;
-    const color = (data.cosmeticColors && data.cosmeticColors[id]) ||
-      (id === "acc-bow" ? "#e8a08a" : id === "acc-scarf" ? "#6aaa6e" : "#e8f6ff");
-    function visibleOutline(hex) {
-      const clean = String(hex || "#888888").replace("#", "");
-      const value = clean.length === 3 ? clean.split("").map(function (c) { return c + c; }).join("") : clean;
-      const r = parseInt(value.slice(0, 2), 16) || 0;
-      const g = parseInt(value.slice(2, 4), 16) || 0;
-      const b = parseInt(value.slice(4, 6), 16) || 0;
-      const light = (r * 299 + g * 587 + b * 114) / 1000 > 145;
-      const amount = light ? 0.52 : 0.42;
-      const mix = function (channel) { return Math.round(light ? channel * amount : channel + (255 - channel) * amount); };
-      return "#" + [mix(r), mix(g), mix(b)].map(function (n) { return n.toString(16).padStart(2, "0"); }).join("");
+  function play() {
+    return PLAY_LINES[Math.floor(Math.random() * PLAY_LINES.length)];
+  }
+
+  /** Bring a pet back. A missed deadline needs a new one. */
+  function revive(newDeadline) {
+    let result = { ok: false, grew: false, completed: false };
+    KipStorage.update(function (data) {
+      const c = data.creature;
+      if (c.alive) return;
+      if (KipFinance.daysLeft(data) <= 0) {
+        if (!newDeadline || newDeadline <= KipFinance.todayIso()) return;
+        data.goal.deadline = newDeadline;
+      }
+      c.alive = true;
+      c.fullness = 60;
+      c.starvingSince = null;
+      c.diedAt = null;
+      c.deathReason = "";
+      c.revives = (c.revives || 0) + 1;
+      c.lastTick = Date.now();
+      result = Object.assign({ ok: true }, checkGrowth(data));
+    });
+    return result;
+  }
+
+  /** Move the current pet into the Memory Box so a new goal can begin. */
+  function retire() {
+    KipStorage.update(function (data) {
+      if (!data.onboarded) return;
+      data.pastPets.push({
+        id: KipStorage.uid(),
+        petName: data.petName,
+        speciesId: data.speciesId,
+        age: data.creature.age,
+        goalLabel: data.goal ? data.goal.label : "",
+        target: data.goal ? data.goal.target : 0,
+        saved: KipFinance.saved(data),
+        revives: data.creature.revives || 0,
+        outcome: isComplete(data) ? "complete" : "released",
+        endedAt: Date.now()
+      });
+      data.lastRetiredSpecies = data.speciesId;
+      data.onboarded = false;
+      data.goal = null;
+      data.transactions = [];
+    });
+  }
+
+  function mood(data) {
+    const c = data.creature;
+    if (!c.alive) return "dead";
+    if (isComplete(data)) return "happy";
+    if (c.fullness >= 60) return "happy";
+    if (c.fullness >= 25) return "okay";
+    return "hungry";
+  }
+
+  function speechForState(data) {
+    const name = data.petName || "Your pet";
+    const c = data.creature;
+    if (!c.alive) {
+      return c.deathReason === "deadline"
+        ? name + " ran out of time before the goal was reached."
+        : name + " went hungry for too long.";
     }
-    if (id === "acc-bow") {
-      const outline = visibleOutline(color);
-      return '<g class="pet-bow"><path d="M96 55 C86 42 71 45 74 58 C77 69 89 66 98 60 Z" fill="' + color + '" stroke="' + outline + '" stroke-width="2.4"></path>' +
-        '<path d="M104 55 C114 42 129 45 126 58 C123 69 111 66 102 60 Z" fill="' + color + '" stroke="' + outline + '" stroke-width="2.4"></path>' +
-        '<circle cx="100" cy="58" r="6" fill="' + color + '" stroke="' + outline + '" stroke-width="2.4"></circle></g>';
-    }
-    if (id === "acc-scarf") {
-      const vein = visibleOutline(color);
-      return '<g class="leaf-necktie"><path d="M100 127 C82 136 82 153 100 166 C118 153 118 136 100 127 Z" fill="' + color + '" stroke="' + vein + '" stroke-width="2"></path>' +
-        '<path d="M100 131 L100 160 M100 143 L91 138 M100 150 L109 144" fill="none" stroke="' + vein + '" stroke-width="2" stroke-linecap="round"></path><path d="M96 124 Q100 120 104 124" fill="none" stroke="' + vein + '" stroke-width="3" stroke-linecap="round"></path></g>';
-    }
-    if (id === "acc-hat") {
-      return '<g class="cloud-hat"><ellipse cx="100" cy="52" rx="34" ry="11" fill="' + color + '"></ellipse><circle cx="82" cy="48" r="13" fill="' + color + '"></circle><circle cx="101" cy="42" r="18" fill="' + color + '"></circle><circle cx="120" cy="48" r="12" fill="' + color + '"></circle><path d="M77 51 Q100 59 125 51" fill="none" stroke="rgba(255,255,255,.65)" stroke-width="3" stroke-linecap="round"></path></g>';
-    }
-    return "";
+    if (isComplete(data)) return "We did it! " + data.goal.label + " is fully saved!";
+    if (c.starvingSince) return "I'm starving! Log some money in, please!";
+    const m = mood(data);
+    if (m === "hungry") return "My tummy is rumbling... time to save a little?";
+    if (m === "okay") return "I could go for a snack soon.";
+    return "I'm full and cozy. Thanks for saving!";
   }
 
   function bodyByShape(species) {
@@ -327,7 +289,6 @@ const KipCreature = (function () {
         fantasyBody(species, age) +
         fantasyFace(species, age) +
         restFace(species, age) +
-        accessoryMarkup(data) +
       "</svg>"
     );
   }
@@ -492,24 +453,23 @@ const KipCreature = (function () {
     document.querySelectorAll("[data-brand='nest']").forEach(function (el) {
       el.textContent = nest;
     });
-    document.querySelectorAll("a.brand").forEach(function (el) {
-      el.textContent = nest;
-    });
-    if (document.title.indexOf("Journal") !== -1) document.title = "Money Journal · " + nest;
-    else document.title = nest;
+    document.title = nest;
   }
 
   return {
-    CARE,
-    sync,
-    care,
-    mood,
-    qualityOfLife,
     AGE_STAGES,
-    speechForState,
+    GOAL_STAGES,
+    STARVE_GRACE_HOURS,
+    sync,
     hatch,
-    buyCosmetic,
-    equipCosmetic,
+    logMoney,
+    removeTransaction,
+    play,
+    revive,
+    retire,
+    isComplete,
+    mood,
+    speechForState,
     petSvgMarkup,
     applyBrand
   };
