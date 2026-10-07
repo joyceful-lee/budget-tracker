@@ -29,14 +29,11 @@
   const completeActions = document.getElementById("complete-actions");
   const journalList = document.getElementById("journal-list");
   const grassField = document.getElementById("grass-field");
-  const careEffect = document.getElementById("care-effect");
   const nestStage = document.querySelector(".nest-stage");
-  const weatherBadge = document.getElementById("home-weather-badge");
   const orbitFeed = document.getElementById("orbit-feed");
   const orbitPlay = document.getElementById("orbit-play");
   const formIn = document.getElementById("form-money-in");
   const formOut = document.getElementById("form-money-out");
-  const moneyInCopy = document.getElementById("money-in-copy");
   const reviveModal = document.getElementById("revive-modal");
   const reviveForm = document.getElementById("revive-form");
   const reviveTitle = document.getElementById("revive-title");
@@ -47,12 +44,13 @@
   const memoryModal = document.getElementById("memory-modal");
   const memoryGrid = document.getElementById("memory-grid");
   const growthModal = document.getElementById("growth-modal");
-  const growthEyebrow = document.getElementById("growth-eyebrow");
   const growthReveal = document.getElementById("growth-reveal");
   const growthTitle = document.getElementById("growth-title");
   const growthCopy = document.getElementById("growth-copy");
 
   const IDLE_CLASSES = ["idle-tilt", "idle-stretch", "idle-hop", "idle-wiggle"];
+  /** Fullness at or above this counts as full, matching the pet's happy mood. */
+  const FULL_THRESHOLD = 60;
   let selectedEgg = null;
   let idleTimer = null;
   // Remember whether the pet was alive at the last render so a death pops the revive modal once.
@@ -155,10 +153,11 @@
 
   function describeDaysLeft(data) {
     const days = KipFinance.daysLeft(data);
-    if (days <= 0) return "Deadline passed";
-    if (days < 1) return "Due today";
+    const date = KipFinance.formatDate(data.goal.deadline);
+    if (days <= 0) return "Due " + date + " (passed)";
+    if (days < 1) return "Due " + date + " (today)";
     const whole = Math.floor(days);
-    return whole + (whole === 1 ? " day left" : " days left");
+    return "Due " + date + " (in " + whole + (whole === 1 ? " day)" : " days)");
   }
 
   function renderJournal(data) {
@@ -167,7 +166,7 @@
     if (!data.transactions.length) {
       const empty = document.createElement("li");
       empty.className = "entry-empty";
-      empty.textContent = "No entries yet. Log money in to feed " + data.petName + ".";
+      empty.textContent = "Nothing has been logged yet.";
       journalList.appendChild(empty);
       return;
     }
@@ -217,16 +216,14 @@
     KipCreature.applyBrand();
     document.querySelectorAll("[data-revive-label]").forEach(function (el) { el.textContent = "Revive " + data.petName; });
     petNameDisplay.textContent = data.petName;
-    speciesLabel.textContent = (alive ? capitalize(c.age) : "Resting") + " " + species.label + " · " + species.element;
+    speciesLabel.textContent = (alive ? capitalize(c.age) + " " : "") + species.label;
     host.innerHTML = KipCreature.petSvgMarkup(data, "creature");
 
     goalLabel.textContent = data.goal.label;
     goalSaved.textContent = KipFinance.formatMoney(KipFinance.saved(data));
     goalTarget.textContent = KipFinance.formatMoney(data.goal.target);
     xpFill.style.width = Math.round(progress * 100) + "%";
-    goalDeadline.textContent = complete
-      ? "Goal reached! 🎉"
-      : "Due " + KipFinance.formatDate(data.goal.deadline) + " · " + describeDaysLeft(data);
+    goalDeadline.textContent = complete ? "This goal is fully saved." : describeDaysLeft(data);
 
     const full = Math.round(c.fullness);
     fullnessFill.style.width = full + "%";
@@ -237,11 +234,14 @@
     } else if (complete) {
       mealHint.textContent = data.petName + " is all grown up and never hungry again.";
     } else if (c.starvingSince) {
-      const hoursLeft = Math.max(0, KipCreature.STARVE_GRACE_HOURS - (Date.now() - c.starvingSince) / 3600000);
-      mealHint.textContent = "Starving! Feed within " + Math.ceil(hoursLeft) + "h or " + data.petName + " will pass away.";
+      const hoursLeft = Math.ceil(Math.max(0, KipCreature.STARVE_GRACE_HOURS - (Date.now() - c.starvingSince) / 3600000));
+      mealHint.textContent = "Log " + KipFinance.formatMoney(KipFinance.amountToFill(data, c.fullness)) + " within " +
+        hoursLeft + (hoursLeft === 1 ? " hour" : " hours") + " to keep " + data.petName + " alive.";
+    } else if (c.fullness >= FULL_THRESHOLD) {
+      const hours = Math.ceil((c.fullness - FULL_THRESHOLD) / 100 * KipFinance.hoursToEmpty(data));
+      mealHint.textContent = "Full for " + hours + (hours === 1 ? " more hour" : " more hours");
     } else {
-      mealHint.textContent = "A full meal is about " + KipFinance.formatMoney(KipFinance.fullMeal(data)) +
-        ". A full belly lasts about " + Math.round(KipFinance.hoursToEmpty(data)) + " hours.";
+      mealHint.textContent = "Log " + KipFinance.formatMoney(KipFinance.amountToFill(data, c.fullness)) + " to feed " + data.petName + ".";
     }
     reviveCount.textContent = c.revives || 0;
 
@@ -250,18 +250,12 @@
     completeActions.hidden = !complete;
     orbitFeed.disabled = !alive || complete;
     orbitPlay.disabled = !alive;
-    moneyInCopy.textContent = "Money in counts toward your goal and feeds " + data.petName + ".";
     if (!alive) closeModal(document.getElementById("money-modal"));
 
     const mood = KipCreature.mood(data);
     const weather = mood === "happy" ? "sunny" : mood === "okay" ? "cloudy" : "rainy";
     nestStage.classList.remove("weather-sunny", "weather-cloudy", "weather-rainy");
     nestStage.classList.add("weather-" + weather);
-    weatherBadge.textContent = mood === "dead" ? "Resting in peace"
-      : complete ? "Goal complete!"
-      : mood === "happy" ? "Well fed"
-      : mood === "okay" ? "Getting peckish"
-      : "Hungry!";
     wrap.classList.remove("is-glowing", "is-hungry", "is-dead");
     if (mood === "dead") wrap.classList.add("is-dead");
     else if (mood === "hungry") wrap.classList.add("is-hungry");
@@ -274,27 +268,23 @@
     wasAlive = alive;
   }
 
-  function celebrate(action, text) {
+  function celebrate(action) {
     clearIdleClasses();
     wrap.classList.add("is-happy", "care-" + action);
-    careEffect.className = "care-effect effect-" + action + " is-active";
-    careEffect.textContent = text;
     window.setTimeout(function () {
       wrap.classList.remove("is-happy", "care-" + action);
-      careEffect.className = "care-effect";
     }, 1000);
   }
 
   function showGrowth(data, completed) {
     const age = data.creature.age;
-    growthEyebrow.textContent = completed ? "Goal reached!" : "Halfway there!";
     growthTitle.textContent = completed
-      ? data.petName + " reached their final form!"
-      : data.petName + " evolved into a " + age + "!";
+      ? data.petName + " reached their final form"
+      : data.petName + " evolved into a " + age;
     growthReveal.innerHTML = KipCreature.petSvgMarkup(data, "creature growth-creature");
     growthCopy.textContent = completed
-      ? "You saved " + KipFinance.formatMoney(data.goal.target) + " for " + data.goal.label + ". Start a new goal whenever you're ready."
-      : "You've saved half of your goal. Keep going to reach the final form!";
+      ? "You saved the full " + KipFinance.formatMoney(data.goal.target) + " for " + data.goal.label + "."
+      : "You have saved half of the money for " + data.goal.label + ".";
     window.setTimeout(function () { openModal(growthModal); }, 450);
   }
 
@@ -304,8 +294,8 @@
     reviveTitle.textContent = data.petName + " has passed away";
     revivePortrait.innerHTML = KipCreature.petSvgMarkup(data, "creature growth-creature");
     reviveCopy.textContent = data.creature.deathReason === "deadline"
-      ? "The deadline arrived before " + data.goal.label + " was fully saved. Pick a new deadline to bring " + data.petName + " back."
-      : data.petName + " went hungry for too long. You can revive them, but it will be counted.";
+      ? "The deadline arrived before " + data.goal.label + " was fully saved, so choose a new deadline to bring " + data.petName + " back."
+      : data.petName + " went hungry for too long.";
     reviveDeadlineWrap.hidden = !expired;
     reviveForm.deadline.min = KipFinance.todayIso(1);
     reviveForm.deadline.value = "";
@@ -340,12 +330,12 @@
     hatchEgg.style.setProperty("--shell", egg.shell);
     hatchEgg.style.setProperty("--speck", egg.speck);
     hatchEgg.classList.add("is-shaking");
-    hatchText.textContent = "Something is wiggling...";
+    hatchText.textContent = "The egg is starting to hatch...";
 
     window.setTimeout(function () {
       hatchEgg.classList.remove("is-shaking");
       hatchEgg.classList.add("is-cracking");
-      hatchText.textContent = "Crack!";
+      hatchText.textContent = "The shell is cracking open...";
     }, 1100);
 
     window.setTimeout(function () {
@@ -354,7 +344,6 @@
       hatchEgg.classList.remove("is-cracking");
       showNest();
       wrap.classList.add("is-happy");
-      feedback.textContent = petName + " hatched! Log money in to keep them fed.";
       window.setTimeout(function () { wrap.classList.remove("is-happy"); }, 900);
     }, 2000);
   }
@@ -421,11 +410,11 @@
       form.reset();
       if (type === "in") {
         feedback.textContent = result.fed
-          ? data.petName + " ate! +" + KipFinance.formatMoney(amount) + " saved."
-          : "+" + KipFinance.formatMoney(amount) + " saved.";
-        if (result.fed) celebrate("feed", "🍓  🍃  ✦");
+          ? data.petName + " ate after you logged " + KipFinance.formatMoney(amount) + " in."
+          : "You logged " + KipFinance.formatMoney(amount) + " in.";
+        if (result.fed) celebrate("feed");
       } else {
-        feedback.textContent = "−" + KipFinance.formatMoney(amount) + " logged as money out.";
+        feedback.textContent = "You logged " + KipFinance.formatMoney(amount) + " out.";
       }
       render();
       if (result.grew || result.completed) showGrowth(data, result.completed);
@@ -437,7 +426,7 @@
   orbitPlay.addEventListener("click", function () {
     if (!KipStorage.load().creature.alive) return;
     const line = KipCreature.play();
-    celebrate("play", "★  ✦  ★");
+    celebrate("play");
     speechEl.textContent = line;
   });
 
@@ -452,14 +441,14 @@
     }
     const result = KipCreature.revive(deadline);
     if (!result.ok) {
-      reviveError.textContent = "Couldn't revive. Try a later deadline.";
+      reviveError.textContent = "That deadline didn't work, so please try a later date.";
       return;
     }
     closeModal(reviveModal);
     const data = KipStorage.load();
-    feedback.textContent = data.petName + " is back! Revived " + data.creature.revives + (data.creature.revives === 1 ? " time." : " times.");
+    feedback.textContent = data.petName + " has been revived.";
     render();
-    celebrate("feed", "✦  ♥  ✦");
+    celebrate("feed");
     if (result.grew || result.completed) showGrowth(data, result.completed);
   });
 
@@ -471,11 +460,11 @@
 
   document.getElementById("release-btn").addEventListener("click", function () {
     if (!window.confirm("Move this pet to the Memory Box and start a new goal?")) return;
-    startNewGoal("A fresh start: set your next goal");
+    startNewGoal("Set your next savings goal");
   });
 
   document.getElementById("new-goal-btn").addEventListener("click", function () {
-    startNewGoal("Nice saving! What's your next goal?");
+    startNewGoal("Set your next savings goal");
   });
 
   function renderMemories() {
@@ -488,18 +477,18 @@
     const list = document.createElement("ul");
     list.className = "entry-list";
     if (!data.pastPets.length) {
-      list.innerHTML = '<li class="entry-empty">Pets you finish or release will be remembered here.</li>';
+      list.innerHTML = '<li class="entry-empty">There are no past pets yet.</li>';
     }
     data.pastPets.slice().reverse().forEach(function (pet) {
       const li = document.createElement("li");
       const meta = document.createElement("div");
       meta.className = "entry-meta";
       const name = document.createElement("span");
-      name.textContent = pet.petName + " · " + pet.goalLabel;
+      name.textContent = pet.petName + ", saving for " + pet.goalLabel;
       const detail = document.createElement("span");
       detail.className = "entry-date";
-      detail.textContent = (pet.outcome === "complete" ? "Goal reached" : "Released") +
-        " · revived " + pet.revives + (pet.revives === 1 ? " time" : " times");
+      detail.textContent = (pet.outcome === "complete" ? "Reached the goal" : "Released early") +
+        " and was revived " + pet.revives + (pet.revives === 1 ? " time" : " times");
       meta.appendChild(name);
       meta.appendChild(detail);
       const amount = document.createElement("span");
@@ -521,7 +510,7 @@
       const row = document.createElement("section");
       row.className = "memory-row";
       const title = document.createElement("h3");
-      title.textContent = id === "money" && !elementUnlocked ? "??? · Hidden creature" : species.element + " · " + species.label;
+      title.textContent = id === "money" && !elementUnlocked ? "Hidden creature" : species.label + " (" + species.element + ")";
       row.appendChild(title);
       const stages = document.createElement("div");
       stages.className = "memory-stages";

@@ -30,7 +30,7 @@ body {
 }
 img, svg { max-width: 100%; display: block; }
 a { color: var(--leaf-deep); }
-h1, h2, h3, .brand, .brand-mark {
+h1, h2, h3, .brand {
   font-family: var(--font-display);
   line-height: 1.15;
   margin: 0 0 0.6rem;
@@ -106,11 +106,6 @@ p { margin: 0 0 1rem; }
   margin-bottom: 0.2rem;
 }
 .muted { color: var(--muted); }
-.brand-mark {
-  font-size: clamp(2rem, 6vw, 3.4rem);
-  font-weight: 800;
-  color: var(--leaf-deep);
-}
 
 .modal {
   position: fixed;
@@ -306,9 +301,7 @@ p { margin: 0 0 1rem; }
   border-radius: 1rem; padding: 0.7rem 0.8rem; background: linear-gradient(135deg,#f7eefc,#fff8e8);
   color: #514060; text-align: left; cursor: pointer;
 }
-.memory-box-button > span:first-child { font-size: 1.8rem; }
-.memory-box-button strong, .memory-box-button small { display: block; }
-.memory-box-button small { color: var(--muted); margin-top: 0.12rem; }
+.memory-box-button strong { display: block; }
 .memory-card { max-width: min(1000px, 94vw); max-height: 88vh; overflow: hidden; display:flex; flex-direction:column; }
 .memory-grid { display: grid; gap: 1rem; min-height:0; overflow-y:auto; overflow-x:hidden; scrollbar-gutter:stable; padding:0 .7rem .35rem 0; }
 .memory-grid::-webkit-scrollbar { width:10px; }
@@ -329,7 +322,6 @@ p { margin: 0 0 1rem; }
   overflow: hidden;
   min-height: 100vh;
 }
-.home-weather-badge { position:absolute; z-index:9; right:1.1rem; top:5.2rem; margin:0; padding:.4rem .7rem; border-radius:999px; background:rgba(255,248,232,.86); color:var(--leaf-deep); font-size:.78rem; font-weight:800; box-shadow:0 5px 12px rgba(31,51,41,.14); }
 .nest-scenery { position: absolute; inset: 0; pointer-events: none; }
 .nest-sky-layer {
   position: absolute;
@@ -543,8 +535,6 @@ p { margin: 0 0 1rem; }
 .creature-mouth { stroke: var(--ink); }
 .creature-shadow { fill: rgba(31, 51, 41, 0.22); }
 .creature-wrap.is-happy .creature { animation: creature-bounce 0.7s ease; }
-.care-effect { position: absolute; left: 50%; top: 25%; z-index: 8; width: 190px; transform: translateX(-50%); text-align: center; font: 800 1.45rem var(--font-display); letter-spacing: .55rem; opacity: 0; pointer-events: none; }
-.care-effect.is-active { animation: care-spark 1s ease both; }
 .creature-wrap.care-feed .creature { animation: care-nibble .8s ease-in-out !important; }
 .creature-wrap.care-play .creature { animation: care-play .85s cubic-bezier(.2,.8,.3,1) !important; }
 .creature-wrap.care-rest .creature { animation: care-rest 1s ease-in-out !important; }
@@ -641,8 +631,6 @@ p { margin: 0 0 1rem; }
   background: linear-gradient(90deg, #f0c15a, var(--honey-deep));
   transition: width 0.6s ease;
 }
-.xp-mark { position: absolute; top: 0; bottom: 0; width: 3px; margin-left: -1.5px; background: rgba(255, 255, 255, 0.85); }
-.xp-legend { display: flex; justify-content: space-between; margin-top: 0.25rem; font-size: 0.72rem; font-weight: 800; color: var(--muted); }
 .goal-deadline { margin: 0.55rem 0 0; font-weight: 800; color: var(--ink-soft); font-size: 0.9rem; }
 .meter-fill.is-low { background: linear-gradient(90deg, #e8a08a, #c45c48); }
 .meter-hint { margin: 0.35rem 0 0; font-size: 0.8rem; font-weight: 600; color: var(--ink-soft); line-height: 1.35; }
@@ -728,7 +716,6 @@ p { margin: 0 0 1rem; }
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.05); }
 }
-@keyframes care-spark { 0%{opacity:0;transform:translate(-50%,30px) scale(.7)} 35%{opacity:1} 100%{opacity:0;transform:translate(-50%,-75px) scale(1.15)} }
 @keyframes care-nibble { 0%,100%{transform:rotate(0)} 25%{transform:translateY(5px) rotate(-4deg)} 45%{transform:translateY(1px) rotate(4deg)} 65%{transform:translateY(5px) rotate(-3deg)} }
 @keyframes care-play { 0%,100%{transform:translate(0,0) rotate(0)} 25%{transform:translate(-12px,-20px) rotate(-8deg)} 50%{transform:translate(10px,-32px) rotate(8deg)} 75%{transform:translate(-4px,-12px) rotate(-4deg)} }
 @keyframes care-rest { 0%,100%{transform:scale(1) rotate(0)} 45%{transform:scale(1.06,.88) translateY(10px) rotate(-3deg)} 70%{transform:scale(1.03,.92) translateY(7px) rotate(2deg)} }

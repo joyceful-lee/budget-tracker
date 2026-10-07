@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Creature Stage Gallery · Nest Friend</title>
+  <title>Creature Stage Gallery</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -39,9 +39,7 @@
   <main class="gallery-shell">
     <header class="gallery-head">
       <div>
-        <p class="eyebrow">Design review</p>
         <h1>All creature stages</h1>
-        <p>Every elemental creature is shown at Baby, Teen, Adult, and Elderly scale using the exact artwork currently rendered in the game.</p>
       </div>
       <a class="btn btn-soft gallery-home" href="index.html">Back to game</a>
     </header>
@@ -64,7 +62,7 @@
 
         const heading = document.createElement("div");
         heading.className = "species-heading";
-        heading.innerHTML = "<h2>" + species.element + " · " + species.label + "</h2>" +
+        heading.innerHTML = "<h2>" + species.label + " (" + species.element + ")" + "</h2>" +
           (id === "money" ? "<span>Hidden creature</span>" : "");
         board.appendChild(heading);
 

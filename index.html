@@ -14,16 +14,14 @@
   <header class="site-header header-over-hero">
     <a class="brand" href="index.html" data-brand="nest">Nest Friend</a>
     <nav class="site-nav" aria-label="Main">
-      <button type="button" class="music-toggle" id="music-toggle" aria-pressed="false" title="Turn the adaptive background music on">♪ Music off</button>
+      <button type="button" class="music-toggle" id="music-toggle" aria-pressed="false" title="Turn the background music on">Music off</button>
       <button type="button" class="nav-reset" data-reset-game>Reset game</button>
     </nav>
   </header>
 
   <div class="modal" id="onboard-modal" hidden>
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="onboard-title">
-      <p class="brand-mark modal-brand">Nest Friend</p>
       <h2 id="onboard-title">Set a savings goal and hatch a friend</h2>
-      <p class="modal-copy">Your pet grows as you save. It evolves at 50% of your goal and reaches its final form at 100%. Log money in to keep it fed!</p>
 
       <form id="onboard-form" class="entry-form onboard-form" novalidate>
         <label>What are you saving for?
@@ -62,9 +60,7 @@
         <p class="goal-amount"><strong id="goal-saved">$0.00</strong> <span>of <span id="goal-target">$0.00</span></span></p>
         <div class="xp-track" aria-hidden="true">
           <div class="xp-fill" id="xp-fill"></div>
-          <span class="xp-mark" style="left:50%"></span>
         </div>
-        <div class="xp-legend"><span>Hatched</span><span>Evolves · 50%</span><span>Final · 100%</span></div>
         <p class="goal-deadline" id="goal-deadline"></p>
       </section>
 
@@ -82,8 +78,8 @@
       <p class="care-feedback" id="care-feedback" aria-live="polite"></p>
 
       <div class="rail-actions" id="rail-actions">
-        <button type="button" class="btn btn-primary" data-open-money="in">Money in · Feed</button>
-        <button type="button" class="btn btn-soft" data-open-money="out">Money out</button>
+        <button type="button" class="btn btn-primary" data-open-money="in">Log money in</button>
+        <button type="button" class="btn btn-soft" data-open-money="out">Log money out</button>
       </div>
       <div class="rail-actions" id="revive-actions" hidden>
         <button type="button" class="btn btn-primary" id="open-revive"><span data-revive-label>Revive</span></button>
@@ -98,13 +94,11 @@
       </section>
 
       <button type="button" class="memory-box-button" id="memory-box-open">
-        <span aria-hidden="true">✦</span>
-        <span><strong>Memory Box</strong><small>Past pets and growth stages</small></span>
+        <strong>Memory Box</strong>
       </button>
     </aside>
 
     <section class="nest-stage" aria-label="Pet habitat">
-      <p class="home-weather-badge" id="home-weather-badge" aria-live="polite"></p>
       <div class="nest-scenery" aria-hidden="true">
         <div class="nest-sky-layer">
           <span class="cloud c1"></span>
@@ -118,7 +112,6 @@
       </div>
 
       <div class="nest-focal">
-        <div class="care-effect" id="care-effect" aria-hidden="true"></div>
         <div class="care-orbit nest-orbit">
           <button type="button" class="orbit-btn orbit-left-top" id="orbit-feed" data-open-money="in" aria-label="Feed by logging money in"><span>Feed</span></button>
           <button type="button" class="orbit-btn orbit-right-top" id="orbit-play" aria-label="Play"><span>Play</span></button>
@@ -147,16 +140,15 @@
         <button type="button" class="tab" data-tab="out">Money out</button>
       </div>
       <form id="form-money-in" class="entry-form tab-panel" data-panel="in">
-        <p class="modal-copy" id="money-in-copy">Money in counts toward your goal and feeds your pet.</p>
         <label>What is it?<input type="text" name="label" maxlength="60" required placeholder="Saturday allowance"></label>
         <label>How much?<input type="number" name="amount" min="0.01" step="0.01" required placeholder="10.00"></label>
-        <button type="submit" class="btn btn-primary">Save it &amp; feed</button>
+        <button type="submit" class="btn btn-primary">Log money in</button>
       </form>
       <form id="form-money-out" class="entry-form tab-panel" data-panel="out" hidden>
-        <p class="modal-copy">Money out is kept in your journal. It doesn't lower your pet's XP.</p>
+        <p class="modal-copy">Money out stays in your journal for your records and doesn't take anything away from your pet's progress.</p>
         <label>What is it?<input type="text" name="label" maxlength="60" required placeholder="Movie ticket"></label>
         <label>How much?<input type="number" name="amount" min="0.01" step="0.01" required placeholder="5.00"></label>
-        <button type="submit" class="btn btn-primary">Take it out</button>
+        <button type="submit" class="btn btn-primary">Log money out</button>
       </form>
     </div>
   </div>
@@ -164,7 +156,6 @@
   <div class="modal" id="revive-modal" hidden>
     <div class="modal-card growth-card" role="dialog" aria-modal="true" aria-labelledby="revive-title">
       <button type="button" class="modal-close" data-close="revive-modal" aria-label="Close">Close</button>
-      <p class="eyebrow">Oh no</p>
       <h2 id="revive-title">Your friend has passed away</h2>
       <div class="growth-reveal is-dead" id="revive-portrait"></div>
       <p id="revive-copy"></p>
@@ -180,7 +171,6 @@
   <div class="modal" id="memory-modal" hidden>
     <div class="modal-card memory-card wide" role="dialog" aria-modal="true" aria-labelledby="memory-title">
       <button type="button" class="modal-close" data-close="memory-modal" aria-label="Close memory box">Close</button>
-      <p class="eyebrow">Keepsakes</p>
       <h2 id="memory-title">Memory Box</h2>
       <div class="memory-grid" id="memory-grid"></div>
     </div>
@@ -188,16 +178,15 @@
 
   <div class="hatch-overlay" id="hatch-overlay" hidden>
     <div class="hatch-egg" id="hatch-egg"></div>
-    <p id="hatch-text">Something is wiggling...</p>
+    <p id="hatch-text">The egg is starting to hatch...</p>
   </div>
 
   <div class="modal" id="growth-modal" hidden>
     <div class="modal-card growth-card" role="dialog" aria-modal="true" aria-labelledby="growth-title">
-      <p class="eyebrow" id="growth-eyebrow">A new memory!</p>
       <h2 id="growth-title">Your friend grew!</h2>
       <div class="growth-reveal" id="growth-reveal"></div>
       <p id="growth-copy"></p>
-      <button type="button" class="btn btn-primary" data-close="growth-modal">Yay!</button>
+      <button type="button" class="btn btn-primary" data-close="growth-modal">Close</button>
     </div>
   </div>
 

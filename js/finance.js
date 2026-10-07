@@ -49,6 +49,11 @@ const KipFinance = (function () {
     return Math.max(1, perDay * hoursToEmpty(data) / 24);
   }
 
+  /** The deposit that tops the pet up to completely full from its current fullness. */
+  function amountToFill(data, fullness) {
+    return Math.max(0.01, Math.ceil(fullMeal(data) * (100 - fullness)) / 100);
+  }
+
   /** Fullness points a deposit restores. Any deposit counts for at least a snack. */
   function feedPoints(data, amount) {
     return Math.max(15, Math.min(100, Math.round(100 * amount / fullMeal(data))));
@@ -84,6 +89,7 @@ const KipFinance = (function () {
     daysLeft,
     hoursToEmpty,
     fullMeal,
+    amountToFill,
     feedPoints,
     formatMoney,
     formatDate,

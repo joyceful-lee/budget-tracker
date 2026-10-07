@@ -51,10 +51,10 @@
 
   function updateButton() {
     toggle.setAttribute("aria-pressed", enabled ? "true" : "false");
-    toggle.textContent = enabled ? "♪ Music on" : "♪ Music off";
+    toggle.textContent = enabled ? "Music on" : "Music off";
     toggle.title = enabled
-      ? "Music is adapting to how well fed your pet is"
-      : "Turn the adaptive background music on";
+      ? "Turn the background music off"
+      : "Turn the background music on";
   }
 
   toggle.addEventListener("click", function () {
