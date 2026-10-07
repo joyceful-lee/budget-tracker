@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=20261006e">
+  <link rel="stylesheet" href="css/styles.css?v=20261007b">
 </head>
 <body class="page-pet">
   <main class="pet-layout">
@@ -18,8 +18,17 @@
         All Nesties
       </a>
       <h1 class="visually-hidden" id="pet-name-display">Nestie</h1>
-      <div id="device-host"></div>
-      <p class="speech panel" id="creature-speech" aria-live="polite"></p>
+      <div id="device-host">
+        <svg class="pet-title" viewBox="0 0 300 92" aria-hidden="true">
+          <defs>
+            <path id="title-arc-name" d="M0 148 A170 170 0 0 1 300 148"/>
+            <path id="title-arc-goal" d="M20 176 A140 140 0 0 1 280 176"/>
+          </defs>
+          <text class="pet-title-name"><textPath href="#title-arc-name" startOffset="50%" text-anchor="middle" id="title-name"></textPath></text>
+          <text class="pet-title-goal"><textPath href="#title-arc-goal" startOffset="50%" text-anchor="middle" id="title-goal"></textPath></text>
+        </svg>
+        <div id="device-slot"></div>
+      </div>
     </section>
 
     <div class="pet-info">
@@ -107,11 +116,11 @@
     </div>
   </div>
 
-  <script src="js/device.js?v=20261006e"></script>
-  <script src="js/storage.js?v=20261006e"></script>
-  <script src="js/finance.js?v=20261006e"></script>
-  <script src="js/creature.js?v=20261006e"></script>
-  <script src="js/pet.js?v=20261006e"></script>
-  <script src="js/music.js?v=20261006e"></script>
+  <script src="js/device.js?v=20261007b"></script>
+  <script src="js/storage.js?v=20261007b"></script>
+  <script src="js/finance.js?v=20261007b"></script>
+  <script src="js/creature.js?v=20261007b"></script>
+  <script src="js/pet.js?v=20261007b"></script>
+  <script src="js/music.js?v=20261007b"></script>
 </body>
 </html>

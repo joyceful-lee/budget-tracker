@@ -5,10 +5,11 @@
   --paper: #fff3d6;
   --card: #fffdf7;
   --cream: #fff8ec;
-  --pink: #ff6fae;
-  --pink-soft: #ffc6df;
-  --grape: #7b5cff;
-  --grape-deep: #5a3ee0;
+  --teal: #2fb5c9;
+  --teal-soft: #b5ecf2;
+  --sun-soft: #ffe39a;
+  --blue: #3d6bff;
+  --blue-deep: #2747c9;
   --sun: #ffd23f;
   --tangerine: #ff8a3d;
   --mint: #3fd6a0;
@@ -20,7 +21,7 @@
   --font-display: "Baloo 2", "Trebuchet MS", sans-serif;
   --font-body: "Nunito", "Segoe UI", sans-serif;
   --font-pixel: "Silkscreen", "Courier New", monospace;
-  --dot-a: var(--pink-soft);
+  --dot-a: var(--sun-soft);
   --dot-b: var(--sky-soft);
   --page: var(--paper);
 }
@@ -42,7 +43,7 @@ body {
   background-position: 0 0, 24px 24px;
 }
 img, svg { max-width: 100%; display: block; }
-a { color: var(--grape-deep); }
+a { color: var(--blue-deep); }
 h1, h2, h3, .brand {
   font-family: var(--font-display);
   line-height: 1.1;
@@ -106,7 +107,7 @@ p { margin: 0 0 1rem; }
 .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 7px 0 var(--ink); }
 .btn:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 2px 0 var(--ink); }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
-.btn-primary { background: var(--grape); color: #fff; }
+.btn-primary { background: var(--blue); color: #fff; }
 .btn-sun { background: var(--sun); }
 .btn-soft { background: var(--card); }
 .pill-btn { padding: 0.32rem 0.85rem; font-size: 0.95rem; box-shadow: 0 3px 0 var(--ink); }
@@ -126,7 +127,7 @@ p { margin: 0 0 1rem; }
   font-family: var(--font-display);
   font-weight: 800;
   font-size: 1.05rem;
-  color: var(--grape-deep);
+  color: var(--blue-deep);
   margin-bottom: 0.1rem;
 }
 .muted { color: var(--muted); }
@@ -237,21 +238,6 @@ p { margin: 0 0 1rem; }
   box-shadow: inset 0 1.2cqw 2.4cqw rgba(42, 33, 64, 0.3), inset 0 -0.6cqw 1.2cqw rgba(255, 255, 255, 0.4);
   background: #dff3d2;
 }
-.device-plate {
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 0 5cqw;
-  text-align: center;
-  line-height: 1;
-  overflow: hidden;
-}
-.device-plate-name,
-.device-plate-goal { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.device-plate-name { font: 800 5.6cqw var(--font-display); color: var(--ink); }
-.device-plate-goal { margin-top: 0.6cqw; font: 800 3.3cqw var(--font-body); color: var(--ink-soft); }
 .device-btn {
   position: absolute;
   border: none;
@@ -343,7 +329,7 @@ p { margin: 0 0 1rem; }
 }
 .lcd-hearts { display: flex; gap: 1cqw; }
 .lcd-heart { width: 6cqw; height: auto; fill: rgba(255, 255, 255, 0.6); stroke: var(--ink); stroke-width: 1.4; }
-.lcd-heart.is-full { fill: #ff4f8b; }
+.lcd-heart.is-full { fill: #ff5a4f; }
 .lcd-percent { background: rgba(255, 255, 255, 0.75); border-radius: 1.5cqw; padding: 0.6cqw 1.4cqw; }
 .lcd-pet {
   position: absolute;
@@ -372,7 +358,7 @@ p { margin: 0 0 1rem; }
   border-radius: 50% 50% 46% 46% / 62% 62% 38% 38%;
   background:
     radial-gradient(ellipse at 30% 22%, rgba(255, 255, 255, 0.9) 0 8%, transparent 25%),
-    radial-gradient(circle at 68% 56%, var(--pink) 0 5%, transparent 6%),
+    radial-gradient(circle at 68% 56%, var(--tangerine) 0 5%, transparent 6%),
     radial-gradient(circle at 34% 66%, var(--sky) 0 4.5%, transparent 5.5%),
     radial-gradient(circle at 58% 80%, var(--sun) 0 4%, transparent 5%),
     linear-gradient(110deg, #fffaf0, #f3e6c8);
@@ -488,7 +474,7 @@ p { margin: 0 0 1rem; }
   place-content: center;
   justify-items: center;
   gap: 1.2rem;
-  background: radial-gradient(circle at 50% 40%, #fff3b8, #ffc6df 55%, #bfe6ff);
+  background: radial-gradient(circle at 50% 40%, #fff3b8, #b5ecf2 55%, #bfe6ff);
   text-align: center;
   font: 800 1.6rem var(--font-display);
 }
@@ -511,11 +497,13 @@ p { margin: 0 0 1rem; }
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.6rem;
   padding: 3.5rem 1rem 1rem;
 }
 .pet-stage .back-link { position: absolute; top: 1rem; left: 1rem; }
-#device-host { width: min(100%, calc((100dvh - 8.5rem) * 300 / 360)); }
+#device-host { width: min(100%, calc((100dvh - 4.5rem) / 1.48)); }
+.pet-title { width: 100%; height: auto; overflow: visible; margin-bottom: -3%; position: relative; z-index: 1; }
+.pet-title-name { font: 800 75px var(--font-display); fill: var(--ink); }
+.pet-title-goal { font: 800 14px var(--font-body); fill: var(--ink-soft); }
 .pet-info {
   display: grid;
   gap: 1.1rem;
@@ -524,26 +512,6 @@ p { margin: 0 0 1rem; }
 }
 .pet-info-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; min-height: 2.6rem; }
 .pet-info-head .eyebrow { margin: 0; font-size: 1.3rem; }
-.speech {
-  position: relative;
-  width: min(420px, 100%);
-  text-align: center;
-  font-weight: 800;
-  padding: 0.7rem 1rem;
-}
-.speech::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: -13px;
-  width: 20px;
-  height: 20px;
-  margin-left: -10px;
-  background: var(--card);
-  border-left: 3px solid var(--ink);
-  border-top: 3px solid var(--ink);
-  transform: rotate(45deg);
-}
 .goal-amount { margin: 0 0 0.5rem; font-weight: 800; color: var(--muted); }
 .goal-amount strong { font-family: var(--font-display); font-size: 2.2rem; color: var(--ink); }
 .xp-track {
@@ -566,7 +534,7 @@ p { margin: 0 0 1rem; }
 .goal-deadline { margin: 0.6rem 0 0; font-weight: 800; color: var(--ink-soft); }
 .meter-top { display: flex; justify-content: space-between; font: 800 1.1rem var(--font-display); margin-bottom: 0.3rem; }
 .meter-track { height: 18px; border: 3px solid var(--ink); border-radius: 999px; background: #fff; overflow: hidden; }
-.meter-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #ff9ccc, var(--pink)); transition: width 0.45s ease; }
+.meter-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #7fe0c0, var(--teal)); transition: width 0.45s ease; }
 .meter-fill.is-low { background: linear-gradient(90deg, #ff8a8a, var(--danger)); }
 .meter-hint { margin: 0.45rem 0 0; font-weight: 800; color: var(--ink-soft); }
 .meter-hint:empty { display: none; }

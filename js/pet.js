@@ -5,8 +5,9 @@
     return;
   }
 
-  const deviceHost = document.getElementById("device-host");
-  const speechEl = document.getElementById("creature-speech");
+  const deviceHost = document.getElementById("device-slot");
+  const titleName = document.getElementById("title-name");
+  const titleGoal = document.getElementById("title-goal");
   const feedback = document.getElementById("care-feedback");
   const petNameDisplay = document.getElementById("pet-name-display");
   const speciesLabel = document.getElementById("pet-species-label");
@@ -43,6 +44,21 @@
   let playBtn = null;
   let spendBtn = null;
 
+  /** The name arc fits about 330 units of text; longer names shrink from the full size to fit. */
+  const NAME_FONT = 75;
+  const NAME_ROOM = 330;
+  function fitTitleName() {
+    const text = titleName.parentNode;
+    text.style.fontSize = "";
+    const len = text.getComputedTextLength();
+    if (len > NAME_ROOM) text.style.fontSize = (NAME_FONT * NAME_ROOM / len) + "px";
+  }
+  if (document.fonts) document.fonts.ready.then(fitTitleName);
+
+  function truncate(s, max) {
+    return s.length > max ? s.slice(0, max - 1).trimEnd() + "\u2026" : s;
+  }
+
   function capitalize(s) {
     return s.charAt(0).toUpperCase() + s.slice(1);
   }
@@ -68,7 +84,6 @@
   /** Build the device once; later renders only refresh its screen so the buttons keep their listeners. */
   function buildDevice(pet) {
     deviceHost.innerHTML = KipDevice.markup(pet.device, {
-      plate: { name: pet.petName, goal: "Saving for " + pet.goal.label },
       buttons: [
         { id: "btn-feed", label: "Feed", ariaLabel: "Feed by logging money in" },
         { id: "btn-play", label: "Play", ariaLabel: "Play" },
@@ -85,7 +100,6 @@
       const live = currentPet();
       if (!live || !live.creature.alive) return;
       celebrate("play");
-      speechEl.textContent = KipCreature.play();
     });
 
     // Tint the page with the device's colors.
@@ -163,7 +177,12 @@
     document.title = pet.petName;
     document.querySelectorAll("[data-revive-label]").forEach(function (el) { el.textContent = "Revive " + pet.petName; });
     screen.innerHTML = KipDevice.screenMarkup(pet);
-    petNameDisplay.textContent = pet.petName;
+    petNameDisplay.textContent = pet.petName + ", saving for " + pet.goal.label;
+    if (titleName.textContent !== pet.petName) {
+      titleName.textContent = pet.petName;
+      fitTitleName();
+    }
+    titleGoal.textContent = "Saving for " + truncate(pet.goal.label, 30);
     speciesLabel.textContent = (alive ? capitalize(c.age) + " " : "") + species.label;
 
     goalSaved.textContent = KipFinance.formatMoney(KipFinance.saved(pet));
@@ -186,7 +205,6 @@
     playBtn.disabled = !alive;
     spendBtn.disabled = !alive;
     if (!alive) closeModal(moneyModal);
-    speechEl.textContent = KipCreature.speechForState(pet);
 
     renderJournal(pet);
 

@@ -8,12 +8,6 @@ const KipCreature = (function () {
   /** Fullness at or above this counts as full, matching the happy mood. */
   const FULL_THRESHOLD = 60;
 
-  const PLAY_LINES = [
-    "Let's tumble in the leaves!",
-    "Tag, you're it!",
-    "Again, again!",
-    "Watch me spin!"
-  ];
 
   function stageForProgress(p) {
     if (p >= 1) return "adult";
@@ -154,10 +148,6 @@ const KipCreature = (function () {
     });
   }
 
-  function play() {
-    return PLAY_LINES[Math.floor(Math.random() * PLAY_LINES.length)];
-  }
-
   /** Bring a pet back. A missed deadline needs a new one. */
   function revive(id, newDeadline) {
     let result = { ok: false, grew: false, completed: false };
@@ -227,22 +217,6 @@ const KipCreature = (function () {
       return "Full for " + hours + (hours === 1 ? " more hour" : " more hours");
     }
     return "Log " + toFill + " to feed " + pet.petName + ".";
-  }
-
-  function speechForState(pet) {
-    const name = pet.petName || "Your pet";
-    const c = pet.creature;
-    if (!c.alive) {
-      return c.deathReason === "deadline"
-        ? name + " ran out of time before the goal was reached."
-        : name + " went hungry for too long.";
-    }
-    if (isComplete(pet)) return "We did it! " + pet.goal.label + " is fully saved!";
-    if (c.starvingSince) return "I'm starving! Log some money in, please!";
-    const m = mood(pet);
-    if (m === "hungry") return "My tummy is rumbling... time to save a little?";
-    if (m === "okay") return "I could go for a snack soon.";
-    return "I'm full and cozy. Thanks for saving!";
   }
 
   function bodyByShape(species) {
@@ -483,12 +457,10 @@ const KipCreature = (function () {
     hatch,
     logMoney,
     removeTransaction,
-    play,
     revive,
     retire,
     isComplete,
     mood,
-    speechForState,
     statusLine,
     petSvgMarkup
   };
