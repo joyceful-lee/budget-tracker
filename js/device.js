@@ -1,0 +1,259 @@
+/** Draws the toy device each pet lives in: its shell shape, colorway, pattern, screen and buttons. */
+const KipDevice = (function () {
+  const NAME = "Nestie";
+  const NAME_PLURAL = "Nesties";
+  const VIEW_W = 300;
+  const VIEW_H = 360;
+  const INK = "#2a2140";
+
+  const COLORWAYS = {
+    bubblegum: { label: "Bubblegum", shell: "#ff8cc6", shell2: "#ff5fa8", accent: "#fff4b8", button: "#ffd23f", bezel: "#fff7fb" },
+    lagoon: { label: "Lagoon", shell: "#4fd6e0", shell2: "#1fa6d9", accent: "#ffffff", button: "#ff8a5b", bezel: "#f2fdff" },
+    lemon: { label: "Lemon", shell: "#ffe45c", shell2: "#ffc21a", accent: "#ff6f91", button: "#5b6cff", bezel: "#fffdf0" },
+    grape: { label: "Grape", shell: "#b58cff", shell2: "#8257ff", accent: "#7ff2ff", button: "#ff8cc6", bezel: "#f8f3ff" },
+    mint: { label: "Mint", shell: "#7cf0c2", shell2: "#2fd39b", accent: "#ffffff", button: "#ff6fae", bezel: "#f3fff9" },
+    tangerine: { label: "Tangerine", shell: "#ffab5c", shell2: "#ff7a2f", accent: "#fff1c9", button: "#38c6e0", bezel: "#fff8ef" },
+    cherry: { label: "Cherry", shell: "#ff6b81", shell2: "#e8344f", accent: "#ffe0e6", button: "#ffd23f", bezel: "#fff5f6" },
+    sky: { label: "Sky", shell: "#9fd3ff", shell2: "#5aa8ff", accent: "#fff6a8", button: "#ff6fae", bezel: "#f6fbff" },
+    lime: { label: "Lime", shell: "#d4f55b", shell2: "#9ad61f", accent: "#5b3cc4", button: "#ff6fae", bezel: "#fbfff0" },
+    midnight: { label: "Midnight", shell: "#5d5bc2", shell2: "#34327e", accent: "#ffd23f", button: "#ff8cc6", bezel: "#eef0ff" }
+  };
+
+  const PATTERNS = ["dots", "stripes", "checks", "stars", "hearts", "waves", "confetti", "sparkles"];
+
+  function bloomPath() {
+    const cx = 150, cy = 200, r = 136, bump = 30, n = 12;
+    let d = "";
+    for (let i = 0; i <= n; i++) {
+      const a = -Math.PI / 2 + (i / n) * Math.PI * 2;
+      const x = (cx + r * Math.cos(a)).toFixed(1), y = (cy + r * Math.sin(a)).toFixed(1);
+      if (i === 0) {
+        d += "M" + x + " " + y;
+      } else {
+        const m = a - Math.PI / n;
+        d += " Q" + (cx + (r + bump) * Math.cos(m)).toFixed(1) + " " + (cy + (r + bump) * Math.sin(m)).toFixed(1) + " " + x + " " + y;
+      }
+    }
+    return d + "Z";
+  }
+
+  /** Each shape lists its outline elements and where the screen, nameplate and buttons sit, in the 300x360 viewBox. */
+  const SHAPES = {
+    egg: {
+      label: "Egg",
+      body: '<path d="M150 24 C232 24 284 140 284 226 C284 306 224 352 150 352 C76 352 16 306 16 226 C16 140 68 24 150 24Z"/>',
+      screen: { x: 76, y: 96, w: 148, h: 110 },
+      plate: { y: 222, w: 188, h: 38 },
+      buttons: { y: 290, r: 16, xs: [100, 150, 200] }
+    },
+    orb: {
+      label: "Orb",
+      body: '<circle cx="150" cy="200" r="148"/>',
+      screen: { x: 78, y: 98, w: 144, h: 106 },
+      plate: { y: 220, w: 196, h: 38 },
+      buttons: { y: 288, r: 16, xs: [100, 150, 200] }
+    },
+    squircle: {
+      label: "Squircle",
+      body: '<rect x="18" y="40" width="264" height="310" rx="78"/>',
+      screen: { x: 54, y: 78, w: 192, h: 118 },
+      plate: { y: 214, w: 214, h: 40 },
+      buttons: { y: 286, r: 17, xs: [98, 150, 202] }
+    },
+    bloom: {
+      label: "Bloom",
+      body: '<path d="' + bloomPath() + '"/>',
+      screen: { x: 84, y: 106, w: 132, h: 98 },
+      plate: { y: 218, w: 176, h: 36 },
+      buttons: { y: 280, r: 15, xs: [104, 150, 196] }
+    },
+    kitty: {
+      label: "Kitty",
+      body: '<path d="M44 132 L58 40 Q62 24 76 32 L140 90 Z"/><path d="M256 132 L242 40 Q238 24 224 32 L160 90 Z"/><rect x="20" y="74" width="260" height="278" rx="88"/>',
+      extra: function (c) {
+        return '<path d="M64 104 L72 56 L112 92 Z" fill="' + c.accent + '" opacity=".75"/><path d="M236 104 L228 56 L188 92 Z" fill="' + c.accent + '" opacity=".75"/>';
+      },
+      screen: { x: 64, y: 114, w: 172, h: 108 },
+      plate: { y: 238, w: 196, h: 38 },
+      buttons: { y: 302, r: 16, xs: [100, 150, 200] }
+    },
+    capsule: {
+      label: "Capsule",
+      body: '<rect x="46" y="28" width="208" height="324" rx="104"/>',
+      screen: { x: 74, y: 94, w: 152, h: 104 },
+      plate: { y: 214, w: 168, h: 38 },
+      buttons: { y: 282, r: 14, xs: [108, 150, 192] }
+    }
+  };
+
+  function pick(list) {
+    return list[Math.floor(Math.random() * list.length)];
+  }
+
+  function randomDevice() {
+    return {
+      shape: pick(Object.keys(SHAPES)),
+      colorway: pick(Object.keys(COLORWAYS)),
+      pattern: pick(PATTERNS)
+    };
+  }
+
+  function resolve(device) {
+    const d = device || {};
+    return {
+      shape: SHAPES[d.shape] ? d.shape : "egg",
+      colorway: COLORWAYS[d.colorway] ? d.colorway : "bubblegum",
+      pattern: PATTERNS.indexOf(d.pattern) !== -1 ? d.pattern : "dots"
+    };
+  }
+
+  function describe(device) {
+    const d = resolve(device);
+    return COLORWAYS[d.colorway].label + " " + SHAPES[d.shape].label.toLowerCase() + " with " + d.pattern;
+  }
+
+  const STAR = "M0,-6 L1.8,-1.9 6,-1.9 2.6,0.8 3.8,5 0,2.5 -3.8,5 -2.6,0.8 -6,-1.9 -1.8,-1.9Z";
+  const HEART = "M0,4 C-7,-1 -5,-7 0,-3.5 C5,-7 7,-1 0,4Z";
+  const SPARKLE = "M0,-7 Q1,-1 7,0 Q1,1 0,7 Q-1,1 -7,0 Q-1,-1 0,-7Z";
+
+  function patternDef(id, name, c) {
+    const a = c.accent, b = c.button;
+    const open = function (w, h, extra) {
+      return '<pattern id="' + id + '" width="' + w + '" height="' + h + '" patternUnits="userSpaceOnUse"' + (extra || "") + ">";
+    };
+    switch (name) {
+      case "stripes":
+        return open(22, 22, ' patternTransform="rotate(38)"') + '<rect width="9" height="22" fill="' + a + '"/></pattern>';
+      case "checks":
+        return open(28, 28) + '<rect width="14" height="14" fill="' + a + '"/><rect x="14" y="14" width="14" height="14" fill="' + a + '"/></pattern>';
+      case "stars":
+        return open(36, 36) + '<path d="' + STAR + '" transform="translate(9 9)" fill="' + a + '"/><path d="' + STAR + '" transform="translate(27 27) scale(.8)" fill="' + b + '"/></pattern>';
+      case "hearts":
+        return open(34, 34) + '<path d="' + HEART + '" transform="translate(9 10) scale(1.2)" fill="' + a + '"/><path d="' + HEART + '" transform="translate(26 27)" fill="' + a + '"/></pattern>';
+      case "waves":
+        return open(40, 18) + '<path d="M0 9 Q10 1 20 9 T40 9" fill="none" stroke="' + a + '" stroke-width="4.5" stroke-linecap="round"/></pattern>';
+      case "confetti":
+        return open(46, 46) +
+          '<rect x="5" y="6" width="9" height="4" rx="2" transform="rotate(30 9 8)" fill="' + a + '"/>' +
+          '<rect x="28" y="12" width="9" height="4" rx="2" transform="rotate(-40 32 14)" fill="' + b + '"/>' +
+          '<circle cx="18" cy="30" r="3" fill="' + b + '"/><circle cx="38" cy="36" r="2.6" fill="' + a + '"/>' +
+          '<rect x="6" y="36" width="8" height="4" rx="2" transform="rotate(-15 10 38)" fill="' + a + '"/></pattern>';
+      case "sparkles":
+        return open(40, 40) + '<path d="' + SPARKLE + '" transform="translate(10 10)" fill="' + a + '"/><path d="' + SPARKLE + '" transform="translate(30 29) scale(.65)" fill="' + a + '"/></pattern>';
+      default:
+        return open(28, 28) + '<circle cx="7" cy="7" r="4.2" fill="' + a + '"/><circle cx="21" cy="21" r="4.2" fill="' + a + '"/></pattern>';
+    }
+  }
+
+  function pct(n, total) {
+    return (n / total * 100).toFixed(3) + "%";
+  }
+
+  let counter = 0;
+
+  /** Inner habitat drawn on the device screen. */
+  function screenMarkup(pet, opts) {
+    const options = opts || {};
+    if (options.egg) {
+      return '<div class="lcd lcd-egg">' +
+        '<div class="lcd-scene"><span class="lcd-sun"></span><span class="lcd-hill"></span></div>' +
+        '<div class="lcd-egg-shape' + (options.eggState ? " is-" + options.eggState : "") + '"></div></div>';
+    }
+    const mood = KipCreature.mood(pet);
+    const c = pet.creature;
+    const hearts = [];
+    const filled = c.alive ? Math.ceil(c.fullness / 25) : 0;
+    for (let i = 0; i < 4; i++) {
+      hearts.push('<svg class="lcd-heart' + (i < filled ? " is-full" : "") + '" viewBox="-8 -8 16 14" aria-hidden="true"><path d="' + HEART + '" transform="scale(1.4)"/></svg>');
+    }
+    const percent = Math.floor(KipFinance.progress(pet) * 100);
+    return '<div class="lcd mood-' + mood + (KipCreature.isComplete(pet) ? " is-complete" : "") + '">' +
+      '<div class="lcd-scene"><span class="lcd-sun"></span><span class="lcd-cloud"></span><span class="lcd-hill"></span></div>' +
+      '<div class="lcd-status"><span class="lcd-hearts">' + hearts.join("") + '</span><span class="lcd-percent">' + percent + "%</span></div>" +
+      '<div class="lcd-pet creature-wrap' + (mood === "dead" ? " is-dead" : mood === "hungry" ? " is-hungry" : "") + '">' +
+      KipCreature.petSvgMarkup(pet, "creature") + "</div></div>";
+  }
+
+  /**
+   * The full device. opts.screen is the screen's inner HTML.
+   * opts.plate, when given, prints { name, goal } on the nameplate.
+   * opts.buttons, when given, makes the three buttons real: [{ label, id, ariaLabel }].
+   */
+  function markup(device, opts) {
+    const options = opts || {};
+    const d = resolve(device);
+    const shape = SHAPES[d.shape];
+    const c = COLORWAYS[d.colorway];
+    const uid = "dev" + (++counter);
+    const s = shape.screen;
+    const bz = 12;
+
+    let svg = '<svg class="device-shell" viewBox="0 0 ' + VIEW_W + " " + VIEW_H + '" aria-hidden="true">' +
+      "<defs>" +
+      '<linearGradient id="' + uid + 'g" x1="0" y1="0" x2="0.4" y2="1"><stop offset="0" stop-color="' + c.shell + '"/><stop offset="1" stop-color="' + c.shell2 + '"/></linearGradient>' +
+      patternDef(uid + "p", d.pattern, c) +
+      '<clipPath id="' + uid + 'c">' + shape.body + "</clipPath>" +
+      '<radialGradient id="' + uid + 'h" cx=".3" cy=".2" r=".6"><stop offset="0" stop-color="#fff" stop-opacity=".75"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>' +
+      "</defs>";
+
+    svg += '<g fill="url(#' + uid + 'g)">' + shape.body + "</g>" +
+      '<g fill="url(#' + uid + 'p)" opacity=".55">' + shape.body + "</g>" +
+      (shape.extra ? shape.extra(c) : "") +
+      '<g clip-path="url(#' + uid + 'c)"><ellipse cx="96" cy="96" rx="96" ry="70" fill="url(#' + uid + 'h)"/>' +
+      '<ellipse cx="150" cy="380" rx="200" ry="70" fill="' + INK + '" opacity=".12"/></g>' +
+      '<rect x="' + (s.x - bz) + '" y="' + (s.y - bz + 3) + '" width="' + (s.w + bz * 2) + '" height="' + (s.h + bz * 2) + '" rx="24" fill="' + INK + '" opacity=".18"/>' +
+      '<rect x="' + (s.x - bz) + '" y="' + (s.y - bz) + '" width="' + (s.w + bz * 2) + '" height="' + (s.h + bz * 2) + '" rx="24" fill="' + c.bezel + '"/>';
+
+    const p = shape.plate;
+    const px = (VIEW_W - p.w) / 2;
+    svg += '<rect x="' + px + '" y="' + (p.y + 3) + '" width="' + p.w + '" height="' + p.h + '" rx="' + (p.h / 2) + '" fill="' + INK + '" opacity=".18"/>' +
+      '<rect x="' + px + '" y="' + p.y + '" width="' + p.w + '" height="' + p.h + '" rx="' + (p.h / 2) + '" fill="' + c.bezel + '"/>';
+
+    const b = shape.buttons;
+    b.xs.forEach(function (x) {
+      svg += '<circle cx="' + x + '" cy="' + (b.y + 4) + '" r="' + b.r + '" fill="' + INK + '" opacity=".3"/>' +
+        '<circle cx="' + x + '" cy="' + b.y + '" r="' + b.r + '" fill="' + c.button + '"/>' +
+        '<ellipse cx="' + (x - b.r * 0.3) + '" cy="' + (b.y - b.r * 0.35) + '" rx="' + (b.r * 0.38) + '" ry="' + (b.r * 0.24) + '" fill="#fff" opacity=".7"/>';
+    });
+    svg += "</svg>";
+
+    const screenStyle = "left:" + pct(s.x, VIEW_W) + ";top:" + pct(s.y, VIEW_H) + ";width:" + pct(s.w, VIEW_W) + ";height:" + pct(s.h, VIEW_H);
+    let html = '<div class="device shape-' + d.shape + '" style="--device-shell:' + c.shell + ";--device-shell-2:" + c.shell2 + ";--device-accent:" + c.accent + ";--device-button:" + c.button + '">' +
+      svg + '<div class="device-screen" style="' + screenStyle + '">' + (options.screen || "") + "</div>";
+
+    if (options.plate) {
+      const plateStyle = "left:" + pct(px, VIEW_W) + ";top:" + pct(p.y, VIEW_H) + ";width:" + pct(p.w, VIEW_W) + ";height:" + pct(p.h, VIEW_H);
+      html += '<div class="device-plate" style="' + plateStyle + '"><strong class="device-plate-name"></strong><span class="device-plate-goal"></span></div>';
+    }
+
+    if (options.buttons) {
+      options.buttons.forEach(function (btn, i) {
+        const x = b.xs[i];
+        const hit = b.r + 6;
+        const style = "left:" + pct(x - hit, VIEW_W) + ";top:" + pct(b.y - hit, VIEW_H) + ";width:" + pct(hit * 2, VIEW_W) + ";height:" + pct(hit * 2, VIEW_H);
+        html += '<button type="button" class="device-btn" id="' + btn.id + '" style="' + style + '" aria-label="' + btn.ariaLabel + '"></button>' +
+          '<span class="device-btn-label" style="left:' + pct(x, VIEW_W) + ";top:" + pct(b.y + b.r + 10, VIEW_H) + '">' + btn.label + "</span>";
+      });
+    }
+    html += "</div>";
+    if (!options.plate) return html;
+    // Fill the plate with textContent so pet names and goals are never parsed as HTML.
+    const holder = document.createElement("div");
+    holder.innerHTML = html;
+    holder.querySelector(".device-plate-name").textContent = options.plate.name;
+    holder.querySelector(".device-plate-goal").textContent = options.plate.goal;
+    return holder.innerHTML;
+  }
+
+  return {
+    NAME,
+    NAME_PLURAL,
+    COLORWAYS,
+    SHAPES,
+    PATTERNS,
+    randomDevice,
+    describe,
+    markup,
+    screenMarkup
+  };
+})();

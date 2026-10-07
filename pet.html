@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nestie</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css?v=20261006e">
+</head>
+<body class="page-pet">
+  <main class="pet-layout">
+    <section class="pet-stage" aria-labelledby="pet-name-display">
+      <a class="back-link" href="index.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+        All Nesties
+      </a>
+      <h1 class="visually-hidden" id="pet-name-display">Nestie</h1>
+      <div id="device-host"></div>
+      <p class="speech panel" id="creature-speech" aria-live="polite"></p>
+    </section>
+
+    <div class="pet-info">
+      <div class="pet-info-head">
+        <p class="eyebrow" id="pet-species-label">Baby</p>
+        <button type="button" class="pill-btn music-toggle" id="music-toggle" aria-pressed="false" title="Turn the background music on">Music off</button>
+      </div>
+
+      <section class="panel" aria-label="Goal progress">
+        <p class="goal-amount"><strong id="goal-saved">$0.00</strong> of <span id="goal-target">$0.00</span></p>
+        <div class="xp-track" aria-hidden="true"><div class="xp-fill" id="xp-fill"></div></div>
+        <p class="goal-deadline" id="goal-deadline"></p>
+      </section>
+
+      <section class="panel" aria-label="Fullness">
+        <div class="meter-top"><span>Fullness</span><span id="stat-fullness">0</span></div>
+        <div class="meter-track"><div class="meter-fill" id="fill-fullness"></div></div>
+        <p class="meter-hint" id="meal-hint"></p>
+      </section>
+
+      <div class="panel stat-row">
+        <span>Times revived</span>
+        <strong id="revive-count">0</strong>
+      </div>
+
+      <p class="care-feedback panel" id="care-feedback" aria-live="polite"></p>
+
+      <div class="rail-actions" id="revive-actions" hidden>
+        <button type="button" class="btn btn-primary" id="open-revive"><span data-revive-label>Revive</span></button>
+      </div>
+      <div class="rail-actions" id="complete-actions" hidden>
+        <button type="button" class="btn btn-primary" id="new-goal-btn">Start a new goal</button>
+      </div>
+
+      <section class="panel journal" aria-labelledby="journal-title">
+        <h2 id="journal-title">Money journal</h2>
+        <ul class="entry-list" id="journal-list"></ul>
+      </section>
+    </div>
+  </main>
+
+  <div class="modal" id="money-modal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="money-modal-title">
+      <button type="button" class="modal-close" data-close="money-modal" aria-label="Close">Close</button>
+      <h2 id="money-modal-title">Log money</h2>
+      <div class="tab-row" role="tablist">
+        <button type="button" class="tab is-active" data-tab="in">Money in</button>
+        <button type="button" class="tab" data-tab="out">Money out</button>
+      </div>
+      <form id="form-money-in" class="entry-form tab-panel" data-panel="in">
+        <label>What is it?<input type="text" name="label" maxlength="60" required placeholder="Saturday allowance"></label>
+        <label>How much?<input type="number" name="amount" min="0.01" step="0.01" required placeholder="10.00"></label>
+        <button type="submit" class="btn btn-primary">Log money in</button>
+      </form>
+      <form id="form-money-out" class="entry-form tab-panel" data-panel="out" hidden>
+        <p class="modal-copy">Money out stays in your journal for your records and doesn't take anything away from your pet's progress.</p>
+        <label>What is it?<input type="text" name="label" maxlength="60" required placeholder="Movie ticket"></label>
+        <label>How much?<input type="number" name="amount" min="0.01" step="0.01" required placeholder="5.00"></label>
+        <button type="submit" class="btn btn-primary">Log money out</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal" id="revive-modal" hidden>
+    <div class="modal-card growth-card" role="dialog" aria-modal="true" aria-labelledby="revive-title">
+      <button type="button" class="modal-close" data-close="revive-modal" aria-label="Close">Close</button>
+      <h2 id="revive-title">Your friend has passed away</h2>
+      <div class="growth-reveal is-dead" id="revive-portrait"></div>
+      <p id="revive-copy"></p>
+      <form id="revive-form" class="entry-form">
+        <label id="revive-deadline-wrap">New deadline<input type="date" name="deadline"></label>
+        <p class="modal-error" id="revive-error" aria-live="polite"></p>
+        <button type="submit" class="btn btn-primary"><span data-revive-label>Revive</span></button>
+      </form>
+      <button type="button" class="link-btn" id="release-btn">Let them rest in the Memory Box</button>
+    </div>
+  </div>
+
+  <div class="modal" id="growth-modal" hidden>
+    <div class="modal-card growth-card" role="dialog" aria-modal="true" aria-labelledby="growth-title">
+      <h2 id="growth-title">Your friend grew</h2>
+      <div class="growth-reveal" id="growth-reveal"></div>
+      <p id="growth-copy"></p>
+      <button type="button" class="btn btn-primary" data-close="growth-modal">Close</button>
+    </div>
+  </div>
+
+  <script src="js/device.js?v=20261006e"></script>
+  <script src="js/storage.js?v=20261006e"></script>
+  <script src="js/finance.js?v=20261006e"></script>
+  <script src="js/creature.js?v=20261006e"></script>
+  <script src="js/pet.js?v=20261006e"></script>
+  <script src="js/music.js?v=20261006e"></script>
+</body>
+</html>

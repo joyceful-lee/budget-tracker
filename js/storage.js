@@ -1,5 +1,5 @@
 const KipStorage = (function () {
-  const KEY = "kips-nest-data-v4";
+  const KEY = "kips-nest-data-v5";
 
   const SPECIES = {
     air: {
@@ -116,57 +116,88 @@ const KipStorage = (function () {
   };
 
   const HATCH_POOL = ["air", "water", "fire", "earth", "metal", "electric", "dark", "fairy"];
-  const EGGS = [
-    { id: "mystery-a", label: "Mystery egg", shell: "#f2e7c9", speck: "#b99d70", pool: HATCH_POOL },
-    { id: "mystery-b", label: "Mystery egg", shell: "#f2e7c9", speck: "#b99d70", pool: HATCH_POOL },
-    { id: "mystery-c", label: "Mystery egg", shell: "#f2e7c9", speck: "#b99d70", pool: HATCH_POOL }
-  ];
+  const LEGACY_KEY = "kips-nest-data-v4";
 
-  function defaultData() {
+  function defaultCreature() {
     return {
-      onboarded: false,
-      petName: "",
-      eggId: "",
-      speciesId: "",
-      goal: null,
-      transactions: [],
-      memories: {},
-      pastPets: [],
-      lastRetiredSpecies: "",
-      creature: {
-        age: "baby",
-        fullness: 100,
-        lastTick: Date.now(),
-        starvingSince: null,
-        alive: true,
-        diedAt: null,
-        deathReason: "",
-        revives: 0,
-        completedAt: null
-      }
+      age: "baby",
+      fullness: 100,
+      lastTick: Date.now(),
+      starvingSince: null,
+      alive: true,
+      diedAt: null,
+      deathReason: "",
+      revives: 0,
+      completedAt: null
     };
   }
 
+  function defaultData() {
+    return {
+      pets: [],
+      memories: {},
+      pastPets: [],
+      lastRetiredSpecies: ""
+    };
+  }
+
+  function normalizePet(pet) {
+    return Object.assign({ transactions: [], device: null }, pet, {
+      creature: Object.assign(defaultCreature(), pet.creature || {}),
+      transactions: Array.isArray(pet.transactions) ? pet.transactions : []
+    });
+  }
+
+  /** Bring a single-pet save from before Nesties into the multi-pet format. */
+  function migrateLegacy() {
+    const raw = localStorage.getItem(LEGACY_KEY);
+    if (!raw) return null;
+    try {
+      const old = JSON.parse(raw);
+      const data = defaultData();
+      data.memories = old.memories || {};
+      data.pastPets = Array.isArray(old.pastPets) ? old.pastPets : [];
+      data.lastRetiredSpecies = old.lastRetiredSpecies || "";
+      if (old.onboarded && old.goal) {
+        data.pets.push({
+          id: uid(),
+          petName: old.petName,
+          speciesId: old.speciesId,
+          goal: old.goal,
+          transactions: old.transactions || [],
+          creature: old.creature,
+          device: null,
+          createdAt: old.goal.createdAt || Date.now()
+        });
+      }
+      return data;
+    } catch (err) {
+      return null;
+    }
+  }
+
   function load() {
+    let parsed = null;
     try {
       const raw = localStorage.getItem(KEY);
-      if (!raw) {
-        const fresh = defaultData();
-        save(fresh);
-        return fresh;
-      }
-      const parsed = JSON.parse(raw);
-      return Object.assign(defaultData(), parsed, {
-        creature: Object.assign(defaultData().creature, parsed.creature || {}),
-        memories: Object.assign({}, parsed.memories || {}),
-        transactions: Array.isArray(parsed.transactions) ? parsed.transactions : [],
-        pastPets: Array.isArray(parsed.pastPets) ? parsed.pastPets : []
-      });
+      parsed = raw ? JSON.parse(raw) : migrateLegacy();
     } catch (err) {
-      const fresh = defaultData();
-      save(fresh);
-      return fresh;
+      parsed = null;
     }
+    const data = Object.assign(defaultData(), parsed || {});
+    data.pets = (Array.isArray(data.pets) ? data.pets : []).map(normalizePet);
+    data.pastPets = Array.isArray(data.pastPets) ? data.pastPets : [];
+    data.memories = Object.assign({}, data.memories || {});
+    // Pets from older saves get a device the first time they load.
+    let assigned = false;
+    data.pets.forEach(function (pet) {
+      if (!pet.device && typeof KipDevice !== "undefined") {
+        pet.device = KipDevice.randomDevice();
+        assigned = true;
+      }
+    });
+    if (!parsed || assigned) save(data);
+    return data;
   }
 
   function save(data) {
@@ -180,6 +211,22 @@ const KipStorage = (function () {
     return data;
   }
 
+  function findPet(data, id) {
+    return data.pets.find(function (p) { return p.id === id; }) || null;
+  }
+
+  /** Run a mutation against one pet. Returns that pet after saving, or null if it doesn't exist. */
+  function updatePet(id, mutator) {
+    let found = null;
+    update(function (data) {
+      const pet = findPet(data, id);
+      if (!pet) return;
+      mutator(pet, data);
+      found = pet;
+    });
+    return found;
+  }
+
   function uid() {
     return "id-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
   }
@@ -188,40 +235,33 @@ const KipStorage = (function () {
     return SPECIES[id] || SPECIES.air;
   }
 
-  function getEgg(id) {
-    return EGGS.find(function (e) { return e.id === id; }) || EGGS[0];
-  }
-
-  function hatchSpecies(eggId, data) {
-    const egg = getEgg(eggId);
-    const pool = egg.pool || HATCH_POOL;
-    // The secret Coinling has a small independent chance to appear.
-    let result = Math.random() < 0.055 ? "money" : pool[Math.floor(Math.random() * pool.length)];
-    // A duplicate of the creature that just retired gets one automatic re-hatch.
-    if (data && data.lastRetiredSpecies && result === data.lastRetiredSpecies) {
-      result = Math.random() < 0.055 ? "money" : pool[Math.floor(Math.random() * pool.length)];
+  function hatchSpecies(data) {
+    function roll() {
+      // The secret Coinling has a small independent chance to appear.
+      return Math.random() < 0.055 ? "money" : HATCH_POOL[Math.floor(Math.random() * HATCH_POOL.length)];
     }
+    const taken = (data.pets || []).map(function (p) { return p.speciesId; });
+    if (data.lastRetiredSpecies) taken.push(data.lastRetiredSpecies);
+    let result = roll();
+    // A species that is already active, or just retired, gets one automatic re-roll.
+    if (taken.indexOf(result) !== -1) result = roll();
     return result;
-  }
-
-  function brandName(data, suffix) {
-    const name = (data && data.petName) ? data.petName : "Nest";
-    return name + "'s " + suffix;
   }
 
   return {
     KEY,
+    LEGACY_KEY,
     SPECIES,
-    EGGS,
     load,
     save,
     update,
+    updatePet,
+    findPet,
     uid,
     defaultData,
+    defaultCreature,
     getSpecies,
-    getEgg,
-    hatchSpecies,
-    brandName
+    hatchSpecies
   };
 })();
 
@@ -229,6 +269,7 @@ document.querySelectorAll("[data-reset-game]").forEach(function (button) {
   button.addEventListener("click", function () {
     if (!window.confirm("Reset all progress and start over?")) return;
     localStorage.removeItem(KipStorage.KEY);
+    localStorage.removeItem(KipStorage.LEGACY_KEY);
     window.location.href = "index.html";
   });
 });

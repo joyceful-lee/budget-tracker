@@ -3,27 +3,36 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nest Friend</title>
+  <title>Nesties</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=20261006a">
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css?v=20261006e">
 </head>
-<body class="page-home">
-  <header class="site-header header-over-hero">
-    <a class="brand" href="index.html" data-brand="nest">Nest Friend</a>
-    <nav class="site-nav" aria-label="Main">
-      <button type="button" class="music-toggle" id="music-toggle" aria-pressed="false" title="Turn the background music on">Music off</button>
-      <button type="button" class="nav-reset" data-reset-game>Reset game</button>
-    </nav>
+<body class="page-gallery">
+  <header class="topbar">
+    <a class="brand" href="index.html">Nest Friend</a>
+    <div class="topbar-actions">
+      <button type="button" class="pill-btn" id="memory-box-open">Memory Box</button>
+      <button type="button" class="pill-btn music-toggle" id="music-toggle" aria-pressed="false" title="Turn the background music on">Music off</button>
+      <button type="button" class="pill-btn pill-danger" data-reset-game>Reset game</button>
+    </div>
   </header>
+
+  <main class="gallery-shell">
+    <div class="gallery-head">
+      <h1>My Nesties</h1>
+    </div>
+    <div class="nestie-grid" id="nestie-grid"></div>
+  </main>
 
   <div class="modal" id="onboard-modal" hidden>
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="onboard-title">
-      <h2 id="onboard-title">Set a savings goal and hatch a friend</h2>
+      <button type="button" class="modal-close" data-close="onboard-modal" id="onboard-close" aria-label="Close">Close</button>
+      <h2 id="onboard-title">Set a savings goal and hatch a Nestie</h2>
 
-      <form id="onboard-form" class="entry-form onboard-form" novalidate>
+      <form id="onboard-form" class="entry-form" novalidate>
         <label>What are you saving for?
           <input type="text" name="goal" maxlength="60" placeholder="New bike" autocomplete="off">
         </label>
@@ -40,132 +49,18 @@
         </label>
       </form>
 
-      <p class="field-label">Choose an egg</p>
-      <div class="egg-grid" id="egg-grid" role="listbox" aria-label="Egg choices"></div>
+      <p class="field-label">Choose a device</p>
+      <div class="device-choices" id="device-choices" role="listbox" aria-label="Device choices"></div>
+      <button type="button" class="link-btn" id="reroll-devices">Show other devices</button>
 
       <p class="modal-error" id="onboard-error" aria-live="polite"></p>
-      <button type="button" class="btn btn-primary" id="hatch-btn">Hatch egg</button>
+      <button type="button" class="btn btn-primary" id="hatch-btn">Hatch</button>
     </div>
   </div>
 
-  <main class="nest-layout" id="nest-layout" hidden>
-    <aside class="stats-rail" aria-label="Goal and journal">
-      <div class="pet-id">
-        <p class="eyebrow" id="pet-species-label">Baby</p>
-        <h1 id="pet-name-display">Friend</h1>
-        <p class="goal-name">Saving for <strong id="goal-label">—</strong></p>
-      </div>
-
-      <section class="goal-card" aria-label="Goal progress">
-        <p class="goal-amount"><strong id="goal-saved">$0.00</strong> <span>of <span id="goal-target">$0.00</span></span></p>
-        <div class="xp-track" aria-hidden="true">
-          <div class="xp-fill" id="xp-fill"></div>
-        </div>
-        <p class="goal-deadline" id="goal-deadline"></p>
-      </section>
-
-      <div class="meter">
-        <div class="meter-top"><span>Fullness</span><span id="stat-fullness">0</span></div>
-        <div class="meter-track"><div class="meter-fill" id="fill-fullness"></div></div>
-        <p class="meter-hint" id="meal-hint"></p>
-      </div>
-
-      <div class="token-row compact">
-        <span>Times revived</span>
-        <strong id="revive-count">0</strong>
-      </div>
-
-      <p class="care-feedback" id="care-feedback" aria-live="polite"></p>
-
-      <div class="rail-actions" id="rail-actions">
-        <button type="button" class="btn btn-primary" data-open-money="in">Log money in</button>
-        <button type="button" class="btn btn-soft" data-open-money="out">Log money out</button>
-      </div>
-      <div class="rail-actions" id="revive-actions" hidden>
-        <button type="button" class="btn btn-primary" id="open-revive"><span data-revive-label>Revive</span></button>
-      </div>
-      <div class="rail-actions" id="complete-actions" hidden>
-        <button type="button" class="btn btn-primary" id="new-goal-btn">Start a new goal</button>
-      </div>
-
-      <section class="journal" aria-labelledby="journal-title">
-        <h2 id="journal-title">Money journal</h2>
-        <ul class="entry-list" id="journal-list"></ul>
-      </section>
-
-      <button type="button" class="memory-box-button" id="memory-box-open">
-        <strong>Memory Box</strong>
-      </button>
-    </aside>
-
-    <section class="nest-stage" aria-label="Pet habitat">
-      <div class="nest-scenery" aria-hidden="true">
-        <div class="nest-sky-layer">
-          <span class="cloud c1"></span>
-          <span class="cloud c2"></span>
-          <span class="cloud c3"></span>
-          <span class="sun-disc"></span>
-        </div>
-        <div class="nest-grass-layer">
-          <div class="grass-tuft-field" id="grass-field"></div>
-        </div>
-      </div>
-
-      <div class="nest-focal">
-        <div class="care-orbit nest-orbit">
-          <button type="button" class="orbit-btn orbit-left-top" id="orbit-feed" data-open-money="in" aria-label="Feed by logging money in"><span>Feed</span></button>
-          <button type="button" class="orbit-btn orbit-right-top" id="orbit-play" aria-label="Play"><span>Play</span></button>
-        </div>
-
-        <div class="nest-stack">
-          <div class="creature-wrap on-nest" id="creature-wrap">
-            <div id="creature-svg-host"></div>
-          </div>
-          <div class="nest-bed">
-            <div class="nest-rim"></div>
-            <div class="nest-inner"></div>
-          </div>
-          <p class="creature-speech under-nest" id="creature-speech" aria-live="polite"></p>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <div class="modal" id="money-modal" hidden>
-    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="money-modal-title">
-      <button type="button" class="modal-close" data-close="money-modal" aria-label="Close">Close</button>
-      <h2 id="money-modal-title">Log money</h2>
-      <div class="tab-row" role="tablist">
-        <button type="button" class="tab is-active" data-tab="in">Money in</button>
-        <button type="button" class="tab" data-tab="out">Money out</button>
-      </div>
-      <form id="form-money-in" class="entry-form tab-panel" data-panel="in">
-        <label>What is it?<input type="text" name="label" maxlength="60" required placeholder="Saturday allowance"></label>
-        <label>How much?<input type="number" name="amount" min="0.01" step="0.01" required placeholder="10.00"></label>
-        <button type="submit" class="btn btn-primary">Log money in</button>
-      </form>
-      <form id="form-money-out" class="entry-form tab-panel" data-panel="out" hidden>
-        <p class="modal-copy">Money out stays in your journal for your records and doesn't take anything away from your pet's progress.</p>
-        <label>What is it?<input type="text" name="label" maxlength="60" required placeholder="Movie ticket"></label>
-        <label>How much?<input type="number" name="amount" min="0.01" step="0.01" required placeholder="5.00"></label>
-        <button type="submit" class="btn btn-primary">Log money out</button>
-      </form>
-    </div>
-  </div>
-
-  <div class="modal" id="revive-modal" hidden>
-    <div class="modal-card growth-card" role="dialog" aria-modal="true" aria-labelledby="revive-title">
-      <button type="button" class="modal-close" data-close="revive-modal" aria-label="Close">Close</button>
-      <h2 id="revive-title">Your friend has passed away</h2>
-      <div class="growth-reveal is-dead" id="revive-portrait"></div>
-      <p id="revive-copy"></p>
-      <form id="revive-form" class="entry-form">
-        <label id="revive-deadline-wrap">New deadline<input type="date" name="deadline"></label>
-        <p class="modal-error" id="revive-error" aria-live="polite"></p>
-        <button type="submit" class="btn btn-primary"><span data-revive-label>Revive</span></button>
-      </form>
-      <button type="button" class="link-btn" id="release-btn">Let them rest and start a new goal</button>
-    </div>
+  <div class="hatch-overlay" id="hatch-overlay" hidden>
+    <div class="hatch-device" id="hatch-device"></div>
+    <p id="hatch-text">The egg is starting to hatch...</p>
   </div>
 
   <div class="modal" id="memory-modal" hidden>
@@ -176,24 +71,11 @@
     </div>
   </div>
 
-  <div class="hatch-overlay" id="hatch-overlay" hidden>
-    <div class="hatch-egg" id="hatch-egg"></div>
-    <p id="hatch-text">The egg is starting to hatch...</p>
-  </div>
-
-  <div class="modal" id="growth-modal" hidden>
-    <div class="modal-card growth-card" role="dialog" aria-modal="true" aria-labelledby="growth-title">
-      <h2 id="growth-title">Your friend grew!</h2>
-      <div class="growth-reveal" id="growth-reveal"></div>
-      <p id="growth-copy"></p>
-      <button type="button" class="btn btn-primary" data-close="growth-modal">Close</button>
-    </div>
-  </div>
-
-  <script src="js/storage.js?v=20261006a"></script>
-  <script src="js/finance.js?v=20261006a"></script>
-  <script src="js/creature.js?v=20261006a"></script>
-  <script src="js/main.js?v=20261006a"></script>
-  <script src="js/music.js?v=20261006a"></script>
+  <script src="js/device.js?v=20261006e"></script>
+  <script src="js/storage.js?v=20261006e"></script>
+  <script src="js/finance.js?v=20261006e"></script>
+  <script src="js/creature.js?v=20261006e"></script>
+  <script src="js/gallery.js?v=20261006e"></script>
+  <script src="js/music.js?v=20261006e"></script>
 </body>
 </html>

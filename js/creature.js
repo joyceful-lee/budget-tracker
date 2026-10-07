@@ -5,6 +5,8 @@ const KipCreature = (function () {
   const HOUR_MS = 3600000;
   /** How long a pet can sit at zero fullness before it dies. */
   const STARVE_GRACE_HOURS = 24;
+  /** Fullness at or above this counts as full, matching the happy mood. */
+  const FULL_THRESHOLD = 60;
 
   const PLAY_LINES = [
     "Let's tumble in the leaves!",
@@ -19,14 +21,13 @@ const KipCreature = (function () {
     return "baby";
   }
 
-  function recordMemory(data, stage) {
-    data.memories = data.memories || {};
-    const key = data.speciesId + ":" + stage;
+  function recordMemory(data, pet, stage) {
+    const key = pet.speciesId + ":" + stage;
     if (!data.memories[key]) {
       data.memories[key] = {
-        speciesId: data.speciesId,
+        speciesId: pet.speciesId,
         stage: stage,
-        petName: data.petName,
+        petName: pet.petName,
         unlockedAt: Date.now()
       };
     }
@@ -36,28 +37,28 @@ const KipCreature = (function () {
     return Math.max(0, Math.min(100, n));
   }
 
-  function isComplete(data) {
-    return !!data.creature.completedAt;
+  function isComplete(pet) {
+    return !!pet.creature.completedAt;
   }
 
-  function die(data, reason, at) {
-    const c = data.creature;
+  function die(pet, reason, at) {
+    const c = pet.creature;
     c.alive = false;
     c.deathReason = reason;
     c.diedAt = at;
   }
 
   /** Advance hunger to now and apply starvation or a missed deadline. */
-  function tick(data) {
-    const c = data.creature;
+  function tick(pet) {
+    const c = pet.creature;
     const now = Date.now();
-    if (!data.onboarded || !data.goal || !c.alive || isComplete(data)) {
+    if (!pet.goal || !c.alive || isComplete(pet)) {
       c.lastTick = now;
-      return data;
+      return pet;
     }
 
     const last = c.lastTick || now;
-    const perHour = 100 / KipFinance.hoursToEmpty(data, last);
+    const perHour = 100 / KipFinance.hoursToEmpty(pet, last);
     const before = c.fullness;
     c.fullness = clamp(before - perHour * (now - last) / HOUR_MS);
     if (c.fullness <= 0 && !c.starvingSince) {
@@ -66,79 +67,90 @@ const KipCreature = (function () {
     c.lastTick = now;
 
     const starvedAt = c.starvingSince ? c.starvingSince + STARVE_GRACE_HOURS * HOUR_MS : Infinity;
-    const dueAt = KipFinance.deadlineEnd(data.goal);
-    if (starvedAt <= now && starvedAt <= dueAt) die(data, "starved", starvedAt);
-    else if (dueAt <= now) die(data, "deadline", dueAt);
-    return data;
+    const dueAt = KipFinance.deadlineEnd(pet.goal);
+    if (starvedAt <= now && starvedAt <= dueAt) die(pet, "starved", starvedAt);
+    else if (dueAt <= now) die(pet, "deadline", dueAt);
+    return pet;
   }
 
   /** Evolve and complete based on saved progress. Pets never de-evolve. */
-  function checkGrowth(data) {
+  function checkGrowth(pet, data) {
     const result = { grew: false, completed: false };
-    if (!data.creature.alive || isComplete(data)) return result;
-    const p = KipFinance.progress(data);
+    if (!pet.creature.alive || isComplete(pet)) return result;
+    const p = KipFinance.progress(pet);
     const target = stageForProgress(p);
-    if (GOAL_STAGES.indexOf(target) > GOAL_STAGES.indexOf(data.creature.age)) {
-      data.creature.age = target;
-      recordMemory(data, target);
+    if (GOAL_STAGES.indexOf(target) > GOAL_STAGES.indexOf(pet.creature.age)) {
+      pet.creature.age = target;
+      recordMemory(data, pet, target);
       result.grew = true;
     }
     if (p >= 1) {
-      data.creature.completedAt = Date.now();
-      data.creature.fullness = 100;
-      data.creature.starvingSince = null;
+      pet.creature.completedAt = Date.now();
+      pet.creature.fullness = 100;
+      pet.creature.starvingSince = null;
       result.completed = true;
     }
     return result;
   }
 
+  /** Tick every pet up to now and return the saved data. */
   function sync() {
-    return KipStorage.update(tick);
-  }
-
-  function hatch(petName, eggId, goal) {
     return KipStorage.update(function (data) {
-      data.speciesId = KipStorage.hatchSpecies(eggId, data);
-      data.onboarded = true;
-      data.petName = petName;
-      data.eggId = eggId;
-      data.goal = goal;
-      data.transactions = [];
-      data.creature = KipStorage.defaultData().creature;
-      recordMemory(data, "baby");
+      data.pets.forEach(tick);
     });
   }
 
-  /** Log money in or out. Money in also feeds the pet. A dead pet blocks logging until revived. */
-  function logMoney(type, label, amount) {
-    let result = { ok: false, fed: 0, grew: false, completed: false };
+  /** Create a new pet inside the chosen device. Returns the new pet's id. */
+  function hatch(petName, device, goal) {
+    let id = "";
     KipStorage.update(function (data) {
-      tick(data);
-      if (!data.creature.alive) return;
+      const pet = {
+        id: KipStorage.uid(),
+        petName: petName,
+        speciesId: KipStorage.hatchSpecies(data),
+        goal: goal,
+        transactions: [],
+        device: device,
+        creature: KipStorage.defaultCreature(),
+        createdAt: Date.now()
+      };
+      data.pets.push(pet);
+      recordMemory(data, pet, "baby");
+      id = pet.id;
+    });
+    return id;
+  }
+
+  /** Log money in or out. Money in also feeds the pet. A dead pet blocks logging until revived. */
+  function logMoney(id, type, label, amount) {
+    let result = { ok: false, fed: 0, grew: false, completed: false };
+    KipStorage.updatePet(id, function (pet, data) {
+      tick(pet);
+      if (!pet.creature.alive) return;
       result.ok = true;
-      data.transactions.push({
+      pet.transactions.push({
         id: KipStorage.uid(),
         type: type,
         label: label,
         amount: amount,
         date: KipFinance.todayIso()
       });
-      const c = data.creature;
-      if (type === "in" && !isComplete(data)) {
-        const points = KipFinance.feedPoints(data, amount);
+      const c = pet.creature;
+      if (type === "in" && !isComplete(pet)) {
+        const points = KipFinance.feedPoints(pet, amount);
         c.fullness = clamp(c.fullness + points);
         c.starvingSince = null;
         result.fed = points;
       }
-      Object.assign(result, checkGrowth(data));
+      Object.assign(result, checkGrowth(pet, data));
     });
     return result;
   }
 
-  function removeTransaction(id) {
-    KipStorage.update(function (data) {
-      if (!data.creature.alive) return;
-      data.transactions = data.transactions.filter(function (t) { return t.id !== id; });
+  function removeTransaction(id, transactionId) {
+    KipStorage.updatePet(id, function (pet) {
+      if (!pet.creature.alive) return;
+      pet.transactions = pet.transactions.filter(function (t) { return t.id !== transactionId; });
     });
   }
 
@@ -147,14 +159,14 @@ const KipCreature = (function () {
   }
 
   /** Bring a pet back. A missed deadline needs a new one. */
-  function revive(newDeadline) {
+  function revive(id, newDeadline) {
     let result = { ok: false, grew: false, completed: false };
-    KipStorage.update(function (data) {
-      const c = data.creature;
+    KipStorage.updatePet(id, function (pet, data) {
+      const c = pet.creature;
       if (c.alive) return;
-      if (KipFinance.daysLeft(data) <= 0) {
+      if (KipFinance.daysLeft(pet) <= 0) {
         if (!newDeadline || newDeadline <= KipFinance.todayIso()) return;
-        data.goal.deadline = newDeadline;
+        pet.goal.deadline = newDeadline;
       }
       c.alive = true;
       c.fullness = 60;
@@ -163,54 +175,71 @@ const KipCreature = (function () {
       c.deathReason = "";
       c.revives = (c.revives || 0) + 1;
       c.lastTick = Date.now();
-      result = Object.assign({ ok: true }, checkGrowth(data));
+      result = Object.assign({ ok: true }, checkGrowth(pet, data));
     });
     return result;
   }
 
-  /** Move the current pet into the Memory Box so a new goal can begin. */
-  function retire() {
+  /** Move a pet into the Memory Box and remove it from the active Nesties. */
+  function retire(id) {
     KipStorage.update(function (data) {
-      if (!data.onboarded) return;
+      const pet = KipStorage.findPet(data, id);
+      if (!pet) return;
       data.pastPets.push({
-        id: KipStorage.uid(),
-        petName: data.petName,
-        speciesId: data.speciesId,
-        age: data.creature.age,
-        goalLabel: data.goal ? data.goal.label : "",
-        target: data.goal ? data.goal.target : 0,
-        saved: KipFinance.saved(data),
-        revives: data.creature.revives || 0,
-        outcome: isComplete(data) ? "complete" : "released",
+        id: pet.id,
+        petName: pet.petName,
+        speciesId: pet.speciesId,
+        age: pet.creature.age,
+        device: pet.device,
+        goalLabel: pet.goal ? pet.goal.label : "",
+        target: pet.goal ? pet.goal.target : 0,
+        saved: KipFinance.saved(pet),
+        revives: pet.creature.revives || 0,
+        outcome: isComplete(pet) ? "complete" : "released",
         endedAt: Date.now()
       });
-      data.lastRetiredSpecies = data.speciesId;
-      data.onboarded = false;
-      data.goal = null;
-      data.transactions = [];
+      data.lastRetiredSpecies = pet.speciesId;
+      data.pets = data.pets.filter(function (p) { return p.id !== id; });
     });
   }
 
-  function mood(data) {
-    const c = data.creature;
+  function mood(pet) {
+    const c = pet.creature;
     if (!c.alive) return "dead";
-    if (isComplete(data)) return "happy";
-    if (c.fullness >= 60) return "happy";
+    if (isComplete(pet)) return "happy";
+    if (c.fullness >= FULL_THRESHOLD) return "happy";
     if (c.fullness >= 25) return "okay";
     return "hungry";
   }
 
-  function speechForState(data) {
-    const name = data.petName || "Your pet";
-    const c = data.creature;
+  /** One line on how full the pet is or what it needs, shared by the gallery and the pet page. */
+  function statusLine(pet) {
+    const c = pet.creature;
+    if (!c.alive) return pet.petName + " has passed away.";
+    if (isComplete(pet)) return pet.petName + " reached the goal.";
+    const toFill = KipFinance.formatMoney(KipFinance.amountToFill(pet, c.fullness));
+    if (c.starvingSince) {
+      const hoursLeft = Math.ceil(Math.max(0, STARVE_GRACE_HOURS - (Date.now() - c.starvingSince) / HOUR_MS));
+      return "Log " + toFill + " within " + hoursLeft + (hoursLeft === 1 ? " hour" : " hours") + " to keep " + pet.petName + " alive.";
+    }
+    if (c.fullness >= FULL_THRESHOLD) {
+      const hours = Math.ceil((c.fullness - FULL_THRESHOLD) / 100 * KipFinance.hoursToEmpty(pet));
+      return "Full for " + hours + (hours === 1 ? " more hour" : " more hours");
+    }
+    return "Log " + toFill + " to feed " + pet.petName + ".";
+  }
+
+  function speechForState(pet) {
+    const name = pet.petName || "Your pet";
+    const c = pet.creature;
     if (!c.alive) {
       return c.deathReason === "deadline"
         ? name + " ran out of time before the goal was reached."
         : name + " went hungry for too long.";
     }
-    if (isComplete(data)) return "We did it! " + data.goal.label + " is fully saved!";
+    if (isComplete(pet)) return "We did it! " + pet.goal.label + " is fully saved!";
     if (c.starvingSince) return "I'm starving! Log some money in, please!";
-    const m = mood(data);
+    const m = mood(pet);
     if (m === "hungry") return "My tummy is rumbling... time to save a little?";
     if (m === "okay") return "I could go for a snack soon.";
     return "I'm full and cozy. Thanks for saving!";
@@ -446,16 +475,6 @@ const KipCreature = (function () {
     return '<g class="rest-face"><path d="M78 ' + y + ' Q86 ' + (y + 7) + ' 94 ' + y + ' M106 ' + y + ' Q114 ' + (y + 7) + ' 122 ' + y + '" fill="none" stroke="' + ink + '" stroke-width="3.5" stroke-linecap="round"></path><path d="M94 ' + (y + 17) + ' Q100 ' + (y + 13) + ' 106 ' + (y + 17) + '" fill="none" stroke="' + ink + '" stroke-width="2.8" stroke-linecap="round"></path><text x="129" y="' + (y - 11) + '" fill="' + ink + '" font-size="14" font-family="sans-serif">z</text><text x="140" y="' + (y - 23) + '" fill="' + ink + '" font-size="18" font-family="sans-serif">z</text></g>';
   }
 
-  function applyBrand() {
-    const data = KipStorage.load();
-    if (!data.onboarded) return;
-    const nest = KipStorage.brandName(data, "Nest");
-    document.querySelectorAll("[data-brand='nest']").forEach(function (el) {
-      el.textContent = nest;
-    });
-    document.title = nest;
-  }
-
   return {
     AGE_STAGES,
     GOAL_STAGES,
@@ -470,7 +489,7 @@ const KipCreature = (function () {
     isComplete,
     mood,
     speechForState,
-    petSvgMarkup,
-    applyBrand
+    statusLine,
+    petSvgMarkup
   };
 })();

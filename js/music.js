@@ -14,8 +14,11 @@
   };
 
   function creatureMood() {
+    // On a pet's page the music follows that pet; in the gallery it follows the first Nestie.
     const data = KipStorage.load();
-    const mood = data.onboarded ? KipCreature.mood(data) : "okay";
+    const id = new URLSearchParams(window.location.search).get("id");
+    const pet = (id && KipStorage.findPet(data, id)) || data.pets[0];
+    const mood = pet ? KipCreature.mood(pet) : "okay";
     if (mood === "happy") return { name: "happy", tempo: 760, wave: "sine" };
     if (mood === "okay") return { name: "calm", tempo: 980, wave: "triangle" };
     return { name: "tender", tempo: 1220, wave: "sine" };
