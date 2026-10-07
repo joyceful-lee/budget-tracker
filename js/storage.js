@@ -148,7 +148,7 @@ const KipStorage = (function () {
     });
   }
 
-  /** Bring a single-pet save from before Nesties into the multi-pet format. */
+  /** Bring a single-pet save from before Budgies into the multi-pet format. */
   function migrateLegacy() {
     const raw = localStorage.getItem(LEGACY_KEY);
     if (!raw) return null;

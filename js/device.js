@@ -1,10 +1,10 @@
 /** Draws the toy device each pet lives in: its shell shape, colorway, pattern, screen and buttons. */
 const KipDevice = (function () {
-  const NAME = "Nestie";
-  const NAME_PLURAL = "Nesties";
+  const NAME = "Budgie";
+  const NAME_PLURAL = "Budgies";
   const VIEW_W = 300;
   const VIEW_H = 360;
-  const INK = "#2a2140";
+  const INK = "#1e1a20";
 
   // Keys are stored in saves, so a colorway can be recolored but its key stays.
   /**

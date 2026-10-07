@@ -45,7 +45,7 @@
   let spendBtn = null;
 
   /** The name arc fits about 330 units of text; longer names shrink from the full size to fit. */
-  const NAME_FONT = 75;
+  const NAME_FONT = 72;
   const NAME_ROOM = 330;
   function fitTitleName() {
     const text = titleName.parentNode;
@@ -104,9 +104,7 @@
 
     // Tint the page with the device's colors.
     const c = KipDevice.COLORWAYS[KipDevice.resolve(pet.device).colorway];
-    document.body.style.setProperty("--page", "color-mix(in srgb, " + c.shell + " 24%, #fffaf0)");
-    document.body.style.setProperty("--dot-a", "color-mix(in srgb, " + c.shell + " 45%, #ffffff)");
-    document.body.style.setProperty("--dot-b", "color-mix(in srgb, " + c.button + " 40%, #ffffff)");
+    document.body.style.setProperty("--page", "color-mix(in srgb, " + c.shell + " 16%, #f4f3ee)");
   }
 
   function describeDaysLeft(pet) {
@@ -147,7 +145,7 @@
       const remove = document.createElement("button");
       remove.type = "button";
       remove.className = "btn-remove";
-      remove.textContent = "×";
+      remove.innerHTML = '<span class="icon" aria-hidden="true">close</span>';
       remove.setAttribute("aria-label", "Remove " + item.label);
       remove.disabled = !alive;
       remove.addEventListener("click", function () {
@@ -197,7 +195,8 @@
     mealHint.textContent = !alive ? ""
       : complete ? pet.petName + " is all grown up and never hungry again."
       : KipCreature.statusLine(pet);
-    reviveCount.textContent = c.revives || 0;
+    const revives = c.revives || 0;
+    reviveCount.textContent = revives ? "Revived " + revives + (revives === 1 ? " time" : " times") : "Never revived";
 
     reviveActions.hidden = alive;
     completeActions.hidden = !complete;
@@ -223,8 +222,8 @@
 
   function showGrowth(pet, completed) {
     growthTitle.textContent = completed
-      ? pet.petName + " reached their final form"
-      : pet.petName + " evolved into a " + pet.creature.age;
+      ? pet.petName + " Reached Their Final Form"
+      : pet.petName + " Evolved into a " + capitalize(pet.creature.age);
     growthReveal.innerHTML = KipCreature.petSvgMarkup(pet, "creature growth-creature");
     growthCopy.textContent = completed
       ? "You saved the full " + KipFinance.formatMoney(pet.goal.target) + " for " + pet.goal.label + "."
@@ -235,7 +234,7 @@
   function showRevive() {
     const pet = currentPet();
     const expired = KipFinance.daysLeft(pet) <= 0;
-    reviveTitle.textContent = pet.petName + " has passed away";
+    reviveTitle.textContent = pet.petName + " Has Passed Away";
     revivePortrait.innerHTML = KipCreature.petSvgMarkup(pet, "creature growth-creature");
     reviveCopy.textContent = pet.creature.deathReason === "deadline"
       ? "The deadline arrived before " + pet.goal.label + " was fully saved, so choose a new deadline to bring " + pet.petName + " back."

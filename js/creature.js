@@ -170,7 +170,7 @@ const KipCreature = (function () {
     return result;
   }
 
-  /** Move a pet into the Memory Box and remove it from the active Nesties. */
+  /** Move a pet into the Memory Box and remove it from the active Budgies. */
   function retire(id) {
     KipStorage.update(function (data) {
       const pet = KipStorage.findPet(data, id);

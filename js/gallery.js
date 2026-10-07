@@ -12,7 +12,7 @@
   const memoryModal = document.getElementById("memory-modal");
   const memoryGrid = document.getElementById("memory-grid");
 
-  const PLUS_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke-width="3.5" stroke-linecap="round" aria-hidden="true"><path d="M12 4v16M4 12h16"/></svg>';
+  const PLUS_ICON = '<span class="icon" aria-hidden="true">add</span>';
   let choices = [];
   let selectedDevice = null;
 
@@ -34,6 +34,10 @@
   function nestieCard(pet) {
     const card = document.createElement("a");
     card.className = "nestie-card" + (pet.creature.alive ? "" : " is-dead");
+    // The name plate takes its device's colors.
+    const colors = KipDevice.COLORWAYS[KipDevice.resolve(pet.device).colorway];
+    card.style.setProperty("--card-tint", colors.shell);
+    card.style.setProperty("--card-accent", colors.button);
     card.href = "pet.html?id=" + encodeURIComponent(pet.id);
     card.innerHTML = KipDevice.markup(pet.device, { screen: KipDevice.screenMarkup(pet) }) +
       '<div class="nestie-plate panel"><h2 class="nestie-name"></h2><p class="nestie-goal"></p>' +
@@ -159,7 +163,7 @@
 
     const history = document.createElement("section");
     history.className = "memory-row";
-    history.innerHTML = "<h3>Past pets</h3>";
+    history.innerHTML = "<h3>Past Pets</h3>";
     const list = document.createElement("ul");
     list.className = "entry-list";
     if (!data.pastPets.length) {
@@ -202,7 +206,7 @@
       const row = document.createElement("section");
       row.className = "memory-row";
       const title = document.createElement("h3");
-      title.textContent = id === "money" && !elementUnlocked ? "Hidden creature" : species.label + " (" + species.element + ")";
+      title.textContent = id === "money" && !elementUnlocked ? "Hidden Creature" : species.label + " (" + species.element + ")";
       row.appendChild(title);
       const stages = document.createElement("div");
       stages.className = "memory-stages";

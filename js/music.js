@@ -14,7 +14,7 @@
   };
 
   function creatureMood() {
-    // On a pet's page the music follows that pet; in the gallery it follows the first Nestie.
+    // On a pet's page the music follows that pet; in the gallery it follows the first Budgie.
     const data = KipStorage.load();
     const id = new URLSearchParams(window.location.search).get("id");
     const pet = (id && KipStorage.findPet(data, id)) || data.pets[0];
@@ -54,7 +54,7 @@
 
   function updateButton() {
     toggle.setAttribute("aria-pressed", enabled ? "true" : "false");
-    toggle.textContent = enabled ? "Music on" : "Music off";
+    toggle.innerHTML = '<span class="icon" aria-hidden="true">' + (enabled ? "music_note" : "music_off") + "</span>" + (enabled ? "Music On" : "Music Off");
     toggle.title = enabled
       ? "Turn the background music off"
       : "Turn the background music on";
@@ -66,7 +66,7 @@
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
       if (!AudioContextClass) {
         enabled = false;
-        toggle.textContent = "Music unavailable";
+        toggle.textContent = "Music Unavailable";
         return;
       }
       if (!context) context = new AudioContextClass();
