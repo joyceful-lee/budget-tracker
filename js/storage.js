@@ -142,11 +142,6 @@ const KipStorage = (function () {
       upcoming: [],
       tokens: 3,
       flowers: 8,
-      bankedFlowers: 0,
-      weeds: 0,
-      lessonsCompleted: [],
-      lessonReviews: {},
-      mapUnlocks: ["start"],
       ownedCosmetics: [],
       equippedNest: "",
       equippedAccessory: "",
@@ -154,14 +149,6 @@ const KipStorage = (function () {
       memories: {},
       retiredCreatures: [],
       lastRetiredSpecies: "",
-      avatar: {
-        skin: "#f3c7a6",
-        hair: "#3b2a1f",
-        shirt: "#2f7a55",
-        pants: "#3d5648",
-        bangs: "side",
-        backHair: "short"
-      },
       creature: {
         hunger: 72,
         joy: 70,
@@ -185,9 +172,7 @@ const KipStorage = (function () {
       const parsed = JSON.parse(raw);
       return Object.assign(defaultData(), parsed, {
         creature: Object.assign(defaultData().creature, parsed.creature || {}),
-        avatar: Object.assign(defaultData().avatar, parsed.avatar || {}),
         cosmeticColors: Object.assign({}, parsed.cosmeticColors || {}),
-        lessonReviews: Object.assign({}, parsed.lessonReviews || {}),
         memories: Object.assign({}, parsed.memories || {}),
         retiredCreatures: Array.isArray(parsed.retiredCreatures) ? parsed.retiredCreatures : []
       });
@@ -233,25 +218,6 @@ const KipStorage = (function () {
     return result;
   }
 
-  function hasLesson(data, id) {
-    return (data.lessonsCompleted || []).indexOf(id) !== -1;
-  }
-
-  function unlocks(data) {
-    return {
-      shop: hasLesson(data, "budget-basics"),
-      weeds: hasLesson(data, "smart-choices"),
-      bank: hasLesson(data, "saving-goals"),
-      planner: hasLesson(data, "upcoming-bills"),
-      gift: hasLesson(data, "needs-wants"),
-      bridgePath: hasLesson(data, "upcoming-bills"),
-      hillPath: hasLesson(data, "saving-goals"),
-      grovePath: hasLesson(data, "needs-wants"),
-      brookPath: hasLesson(data, "budget-basics"),
-      clearingPath: hasLesson(data, "smart-choices")
-    };
-  }
-
   function cosmeticBonus(data) {
     let bonus = 0;
     COSMETICS.forEach(function (item) {
@@ -284,8 +250,6 @@ const KipStorage = (function () {
     getSpecies,
     getEgg,
     hatchSpecies,
-    hasLesson,
-    unlocks,
     cosmeticBonus,
     getCosmetic,
     brandName

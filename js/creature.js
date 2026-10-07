@@ -114,7 +114,7 @@ const KipCreature = (function () {
       if ((data.tokens || 0) < 1) {
         result = {
           ok: false,
-          message: "You need a nest token. Improve your journal or finish a lesson."
+          message: "You need a nest token. Improve your journal to earn more."
         };
         return;
       }
@@ -172,7 +172,6 @@ const KipCreature = (function () {
       data.speciesId = speciesId;
       data.tokens = 3;
       data.flowers = 8;
-      data.mapUnlocks = ["start"];
       data.creature = {
         hunger: 80,
         joy: 80,
@@ -184,22 +183,6 @@ const KipCreature = (function () {
       };
       recordMemory(data, "baby");
     });
-  }
-
-  function completeLesson(lessonId, flowerBonus, mapRegion) {
-    let firstClear = false;
-    KipStorage.update(function (data) {
-      if (data.lessonsCompleted.indexOf(lessonId) === -1) {
-        data.lessonsCompleted.push(lessonId);
-        data.tokens = (data.tokens || 0) + 2;
-        data.flowers = (data.flowers || 0) + (flowerBonus || 4);
-        firstClear = true;
-        if (mapRegion && data.mapUnlocks.indexOf(mapRegion) === -1) {
-          data.mapUnlocks.push(mapRegion);
-        }
-      }
-    });
-    return firstClear;
   }
 
   function buyCosmetic(itemId) {
@@ -502,83 +485,17 @@ const KipCreature = (function () {
     return '<g class="rest-face"><path d="M78 ' + y + ' Q86 ' + (y + 7) + ' 94 ' + y + ' M106 ' + y + ' Q114 ' + (y + 7) + ' 122 ' + y + '" fill="none" stroke="' + ink + '" stroke-width="3.5" stroke-linecap="round"></path><path d="M94 ' + (y + 17) + ' Q100 ' + (y + 13) + ' 106 ' + (y + 17) + '" fill="none" stroke="' + ink + '" stroke-width="2.8" stroke-linecap="round"></path><text x="129" y="' + (y - 11) + '" fill="' + ink + '" font-size="14" font-family="sans-serif">z</text><text x="140" y="' + (y - 23) + '" fill="' + ink + '" font-size="18" font-family="sans-serif">z</text></g>';
   }
 
-  function bangsPath(bangs, hair) {
-    if (bangs === "full") {
-      return '<path d="M36 34 Q60 18 84 34 L84 50 Q74 42 66 50 Q60 44 54 50 Q46 42 36 50 Z" fill="' + hair + '"></path>';
-    }
-    if (bangs === "curtain") {
-      return '<path d="M60 27 C49 20 36 26 35 38 C34 49 43 55 60 39 C57 35 57 31 60 27Z" fill="' + hair + '"></path><path d="M60 27 C71 20 84 26 85 38 C86 49 77 55 60 39 C63 35 63 31 60 27Z" fill="' + hair + '"></path><path d="M52 29 Q60 18 68 29 L64 40 Q60 43 56 40Z" fill="' + hair + '"></path>';
-    }
-    return '<path d="M36 35 C50 20 72 20 84 35 C70 36 62 44 52 56 C46 60 38 58 36 52 C44 48 44 42 36 46 C34 42 34 38 36 35Z" fill="' + hair + '"></path>';
-  }
-
-  function backHairPath(style, hair) {
-    if (style === "long") {
-      return '<path d="M31 51 C28 28 43 15 60 15 C78 15 93 28 89 52 C92 78 92 106 86 124 Q60 116 34 124 C28 105 28 78 31 51Z" fill="' + hair + '"></path>';
-    }
-    if (style === "pony") {
-      return (
-        '<path d="M33 49 C30 28 45 16 60 16 C76 16 90 29 87 51 L83 68 Q60 76 37 68 C33 62 31 56 33 49Z" fill="' + hair + '"></path>' +
-        '<ellipse cx="84" cy="49" rx="6" ry="5" fill="' + hair + '"></ellipse><path d="M88 49 C103 53 108 65 103 77 C99 87 104 97 99 108 C94 121 84 126 79 118 C76 112 83 103 84 95 C85 84 79 77 84 67 C89 58 95 56 88 49Z" fill="' + hair + '"></path>'
-      );
-    }
-    if (style === "afro") {
-      return '<path d="M28 54 C24 28 40 10 60 8 C82 10 98 28 94 54 C98 70 90 84 76 88 C68 96 52 96 44 88 C30 84 24 70 28 54Z" fill="' + hair + '"></path>';
-    }
-    return '<path d="M32 51 C29 29 44 16 60 16 C77 16 91 29 88 52 C89 68 83 79 74 85 Q60 91 46 85 C37 79 31 68 32 51Z" fill="' + hair + '"></path>';
-  }
-
-  function avatarSvgMarkup(avatar, sizeClass, walking) {
-    const a = Object.assign(KipStorage.defaultData().avatar, avatar || {});
-    const walkClass = walking ? " is-walking" : "";
-    return (
-      '<svg class="' + (sizeClass || "avatar") + walkClass + '" style="--avatar-hair:' + a.hair + '" viewBox="0 0 120 180" aria-hidden="true">' +
-        '<ellipse cx="60" cy="172" rx="24" ry="6" fill="rgba(31,51,41,0.22)"></ellipse>' +
-        '<g class="avatar-hair-back">' + backHairPath(a.backHair, a.hair) + "</g>" +
-        '<g class="avatar-leg avatar-limb left">' +
-          '<rect x="43" y="116" width="13" height="34" rx="6" fill="' + a.pants + '"></rect>' +
-          '<ellipse cx="50" cy="154" rx="9" ry="5" fill="#2a2a2a"></ellipse>' +
-        "</g>" +
-        '<g class="avatar-leg avatar-limb right">' +
-          '<rect x="64" y="116" width="13" height="34" rx="6" fill="' + a.pants + '"></rect>' +
-          '<ellipse cx="70" cy="154" rx="9" ry="5" fill="#2a2a2a"></ellipse>' +
-        "</g>" +
-        '<g class="avatar-arm avatar-limb left">' +
-          '<circle cx="38" cy="87" r="10" fill="' + a.shirt + '"></circle>' +
-          '<rect x="27" y="86" width="14" height="32" rx="7" fill="' + a.skin + '"></rect>' +
-        "</g>" +
-        '<g class="avatar-arm avatar-limb right">' +
-          '<circle cx="82" cy="87" r="10" fill="' + a.shirt + '"></circle>' +
-          '<rect x="79" y="86" width="14" height="32" rx="7" fill="' + a.skin + '"></rect>' +
-        "</g>" +
-        '<path class="avatar-torso" d="M44 78 Q60 70 76 78 Q82 94 78 118 Q60 130 42 118 Q38 94 44 78Z" fill="' + a.shirt + '"></path>' +
-        '<circle class="avatar-head" cx="60" cy="56" r="23" fill="' + a.skin + '"></circle>' +
-        '<g class="avatar-hair-front-backview">' + backHairPath(a.backHair, a.hair) + "</g>" +
-        '<g class="avatar-bangs">' + bangsPath(a.bangs, a.hair) + "</g>" +
-        '<g class="avatar-face"><path d="M47 52 Q51 49 55 52 M65 52 Q69 49 73 52" fill="none" stroke="#3d281f" stroke-width="1.5" stroke-linecap="round"></path>' +
-        '<ellipse class="avatar-eye eye-left" cx="51" cy="57" rx="2.4" ry="3" fill="#3a2a26"></ellipse><ellipse class="avatar-eye eye-right" cx="69" cy="57" rx="2.4" ry="3" fill="#3a2a26"></ellipse>' +
-        '<circle cx="50.4" cy="56" r=".7" fill="#fff"></circle><circle cx="68.4" cy="56" r=".7" fill="#fff"></circle>' +
-        '<path d="M56 67 Q60 70 64 67" fill="none" stroke="#713e42" stroke-width="1.5" stroke-linecap="round"></path></g>' +
-      "</svg>"
-    );
-  }
-
   function applyBrand() {
     const data = KipStorage.load();
     if (!data.onboarded) return;
     const nest = KipStorage.brandName(data, "Nest");
-    const world = KipStorage.brandName(data, "World");
     document.querySelectorAll("[data-brand='nest']").forEach(function (el) {
       el.textContent = nest;
-    });
-    document.querySelectorAll("[data-brand='world']").forEach(function (el) {
-      el.textContent = world;
     });
     document.querySelectorAll("a.brand").forEach(function (el) {
       el.textContent = nest;
     });
-    if (document.title.indexOf("World") !== -1) document.title = world;
-    else if (document.title.indexOf("Journal") !== -1) document.title = "Money Journal · " + nest;
+    if (document.title.indexOf("Journal") !== -1) document.title = "Money Journal · " + nest;
     else document.title = nest;
   }
 
@@ -591,11 +508,9 @@ const KipCreature = (function () {
     AGE_STAGES,
     speechForState,
     hatch,
-    completeLesson,
     buyCosmetic,
     equipCosmetic,
     petSvgMarkup,
-    avatarSvgMarkup,
     applyBrand
   };
 })();
