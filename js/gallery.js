@@ -68,7 +68,7 @@
       btn.setAttribute("role", "option");
       btn.setAttribute("aria-selected", selectedDevice === device ? "true" : "false");
       btn.setAttribute("aria-label", KipDevice.describe(device));
-      btn.innerHTML = KipDevice.markup(device, { screen: KipDevice.screenMarkup(null, { egg: true }) });
+      btn.innerHTML = KipDevice.markup(device, { screen: KipDevice.screenMarkup(null, { egg: true, device: device }) });
       btn.addEventListener("click", function () {
         selectedDevice = choices[i];
         onboardError.textContent = "";
@@ -108,12 +108,12 @@
   }
 
   function runHatch(petName, device, goal) {
-    hatchDevice.innerHTML = KipDevice.markup(device, { screen: KipDevice.screenMarkup(null, { egg: true, eggState: "shaking" }) });
+    hatchDevice.innerHTML = KipDevice.markup(device, { screen: KipDevice.screenMarkup(null, { egg: true, eggState: "shaking", device: device }) });
     hatchText.textContent = "The egg is starting to hatch...";
     hatchOverlay.hidden = false;
 
     window.setTimeout(function () {
-      setHatchScreen(KipDevice.screenMarkup(null, { egg: true, eggState: "cracking" }));
+      setHatchScreen(KipDevice.screenMarkup(null, { egg: true, eggState: "cracking", device: device }));
       hatchText.textContent = "The shell is cracking open...";
     }, 1300);
 

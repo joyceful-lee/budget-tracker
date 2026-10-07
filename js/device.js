@@ -162,14 +162,65 @@ const KipDevice = (function () {
     return (n / total * 100).toFixed(3) + "%";
   }
 
+  /** Mix a hex color toward white by the given amount (0 to 1). */
+  function lighten(hex, amount) {
+    const n = parseInt(hex.slice(1), 16);
+    const ch = function (v) { return Math.round(v + (255 - v) * amount).toString(16).padStart(2, "0"); };
+    return "#" + ch(n >> 16) + ch((n >> 8) & 255) + ch(n & 255);
+  }
+
+  function luminance(hex) {
+    const n = parseInt(hex.slice(1), 16);
+    return (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
+  }
+
+  /** The pattern's motif as a single shape centered on 0,0, about 14 units across. */
+  function motif(name, fill) {
+    switch (name) {
+      case "stripes":
+        return '<rect x="-2.6" y="-8" width="5.2" height="16" rx="2.6" transform="rotate(38)" fill="' + fill + '"/>';
+      case "checks":
+        return '<rect x="-5.5" y="-5.5" width="11" height="11" rx="1.5" fill="' + fill + '"/>';
+      case "stars":
+        return '<path d="' + STAR + '" transform="scale(1.25)" fill="' + fill + '"/>';
+      case "bolts":
+        return '<path d="' + BOLT + '" fill="' + fill + '"/>';
+      case "waves":
+        return '<path d="M-8 1 Q-4 -4 0 1 T8 1" fill="none" stroke="' + fill + '" stroke-width="3.2" stroke-linecap="round"/>';
+      case "confetti":
+        return '<rect x="-6" y="-2.2" width="12" height="4.4" rx="2.2" transform="rotate(-30)" fill="' + fill + '"/>';
+      case "sparkles":
+        return '<path d="' + SPARKLE + '" fill="' + fill + '"/>';
+      default:
+        return '<circle r="5" fill="' + fill + '"/>';
+    }
+  }
+
+  /**
+   * The screen backdrop: a pastel of the shell color with the pattern's motif repeated like a
+   * checkerboard (a motif in every other cell), fading out across the screen.
+   */
+  function screenStyle(device) {
+    const d = resolve(device);
+    const c = COLORWAYS[d.colorway];
+    // Very light or very dark shells would wash out, so their screens take the accent color instead.
+    const lum = luminance(c.shell);
+    const base = lum > 0.85 || lum < 0.2 ? c.accent : c.shell;
+    const tile = '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">' +
+      '<g transform="translate(10 10)">' + motif(d.pattern, lighten(base, 0.72)) + "</g>" +
+      '<g transform="translate(30 30)">' + motif(d.pattern, lighten(base, 0.72)) + "</g></svg>";
+    return "--screen-top:" + lighten(base, 0.95) + ";--screen-bottom:" + lighten(base, 0.9) +
+      ";--screen-motif:url('data:image/svg+xml," + encodeURIComponent(tile).replace(/'/g, "%27") + "')";
+  }
+
   let counter = 0;
 
-  /** Inner habitat drawn on the device screen. */
+  /** Inner habitat drawn on the device screen. opts.device sets the backdrop when there's no pet yet. */
   function screenMarkup(pet, opts) {
     const options = opts || {};
+    const scene = '<div class="lcd-scene" style="' + screenStyle(pet ? pet.device : options.device) + '"><span class="lcd-motif"></span></div>';
     if (options.egg) {
-      return '<div class="lcd lcd-egg">' +
-        '<div class="lcd-scene"><span class="lcd-sun"></span><span class="lcd-hill"></span></div>' +
+      return '<div class="lcd lcd-egg">' + scene +
         '<div class="lcd-egg-shape' + (options.eggState ? " is-" + options.eggState : "") + '"></div></div>';
     }
     const mood = KipCreature.mood(pet);
@@ -181,7 +232,7 @@ const KipDevice = (function () {
     }
     const percent = Math.floor(KipFinance.progress(pet) * 100);
     return '<div class="lcd mood-' + mood + (KipCreature.isComplete(pet) ? " is-complete" : "") + '">' +
-      '<div class="lcd-scene"><span class="lcd-sun"></span><span class="lcd-cloud"></span><span class="lcd-hill"></span></div>' +
+      scene +
       '<div class="lcd-status"><span class="lcd-hearts">' + hearts.join("") + '</span><span class="lcd-percent">' + percent + "%</span></div>" +
       '<div class="lcd-pet creature-wrap' + (mood === "dead" ? " is-dead" : mood === "hungry" ? " is-hungry" : "") + '">' +
       KipCreature.petSvgMarkup(pet, "creature") + "</div></div>";

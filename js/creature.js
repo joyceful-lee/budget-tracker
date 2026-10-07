@@ -282,16 +282,27 @@ const KipCreature = (function () {
     );
   }
 
+  let outlineCount = 0;
+
   function petSvgMarkup(data, sizeClass) {
     const species = KipStorage.getSpecies(data.speciesId);
     const cls = sizeClass || "creature";
     const age = (data.creature && data.creature.age) || "baby";
+    // A black border traced around the pet's silhouette: its shape grown outward, filled black, under the art.
+    const outline = "pet-outline-" + (++outlineCount);
     return (
       '<svg class="' + cls + ' age-' + age + ' species-' + species.id + '" viewBox="0 0 200 200" aria-hidden="true">' +
+        '<defs><filter id="' + outline + '" x="-10%" y="-10%" width="120%" height="120%">' +
+          '<feMorphology in="SourceAlpha" operator="dilate" radius="3" result="grown"/>' +
+          '<feFlood flood-color="#000"/><feComposite in2="grown" operator="in" result="border"/>' +
+          '<feMerge><feMergeNode in="border"/><feMergeNode in="SourceGraphic"/></feMerge>' +
+        "</filter></defs>" +
         '<ellipse class="creature-shadow" cx="100" cy="168" rx="42" ry="10"></ellipse>' +
-        fantasyBody(species, age) +
-        fantasyFace(species, age) +
-        restFace(species, age) +
+        '<g filter="url(#' + outline + ')">' +
+          fantasyBody(species, age) +
+          fantasyFace(species, age) +
+          restFace(species, age) +
+        "</g>" +
       "</svg>"
     );
   }
