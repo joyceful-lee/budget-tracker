@@ -40,8 +40,6 @@
   // Remember whether the pet was alive at the last render so a death pops the revive modal once.
   let wasAlive = null;
   let screen = null;
-  // Species with ASCII art draw as colored text; the rest keep their SVG art for now.
-  let textScreen = null;
   let feedBtn = null;
   let playBtn = null;
   let spendBtn = null;
@@ -178,12 +176,7 @@
 
     document.title = pet.petName;
     document.querySelectorAll("[data-revive-label]").forEach(function (el) { el.textContent = "Revive " + pet.petName; });
-    if (KipScreen.supports(pet)) {
-      if (textScreen) textScreen.update(pet);
-      else textScreen = KipScreen.mount(screen, pet);
-    } else {
-      screen.innerHTML = KipDevice.screenMarkup(pet);
-    }
+    screen.innerHTML = KipDevice.screenMarkup(pet);
     petNameDisplay.textContent = pet.petName + ", saving for " + pet.goal.label;
     if (titleName.textContent !== pet.petName) {
       titleName.textContent = pet.petName;
@@ -220,10 +213,6 @@
   }
 
   function celebrate(action) {
-    if (textScreen) {
-      textScreen.act(action);
-      return;
-    }
     const wrap = screen.querySelector(".lcd-pet");
     if (!wrap) return;
     wrap.classList.add("is-happy", "care-" + action);
