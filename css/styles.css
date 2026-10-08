@@ -36,7 +36,12 @@ body {
   color: var(--ink);
   line-height: 1.5;
   overflow-x: hidden;
+  overflow-x: clip;
   background-color: var(--page);
+  /* Dot-grid paper, inked faintly in the indigo. */
+  background-image: radial-gradient(circle, rgba(93, 81, 215, 0.2) 1.3px, transparent 1.8px);
+  background-size: 20px 20px;
+  background-position: 10px 10px;
 }
 img, svg { max-width: 100%; display: block; }
 a { color: var(--blue-deep); }
@@ -216,8 +221,9 @@ p { margin: 0 0 1rem; }
   padding: 1.2rem 3.9rem 1.15rem 1.35rem;
   background: var(--blue);
   color: var(--sun);
-  border-bottom: var(--line) solid var(--ink);
   line-height: 1.3;
+  position: relative;
+  margin-bottom: 2.4rem;
 }
 .growth-card > h2 { padding-left: 3.9rem; }
 .modal-error { min-height: 1.25rem; color: var(--danger); font-weight: 800; margin: 0.25rem 0; }
@@ -407,65 +413,112 @@ p { margin: 0 0 1rem; }
 .growth-card { text-align: center; }
 .growth-reveal { width: min(240px, 66vw); margin: 0 auto; animation: growth-pop .8s cubic-bezier(.2,.9,.3,1.2); }
 
+/* Halftone edge: indigo bands break up into shrinking dots instead of ending on a hard rule.
+   Each row is one background layer; alternate rows shift half a cell like a print screen. */
+.page-gallery .gallery-head::after,
+.pet-card-head::after,
+.modal-card > h2::after,
+.species-heading::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% - 5px);
+  height: 30px;
+  pointer-events: none;
+  background:
+    radial-gradient(circle, var(--blue) 5.6px, transparent 6px) 0 0 / 10px 10px repeat-x,
+    radial-gradient(circle, var(--blue) 4.1px, transparent 4.5px) 5px 5px / 10px 10px repeat-x,
+    radial-gradient(circle, var(--blue) 3px, transparent 3.4px) 0 10px / 10px 10px repeat-x,
+    radial-gradient(circle, var(--blue) 2px, transparent 2.4px) 5px 15px / 10px 10px repeat-x,
+    radial-gradient(circle, var(--blue) 1.1px, transparent 1.5px) 0 20px / 10px 10px repeat-x;
+}
+.page-gallery .gallery-head::after { left: calc(50% - 50vw); right: calc(50% - 50vw); }
+
 /* Gallery */
 /* The gallery opens on an indigo header band: the top bar and the page title, full width. */
-.page-gallery .topbar { background: var(--blue); }
+/* The top bar shares the content column, so the brand, the title and the first card line up. */
+.page-gallery .topbar {
+  background: var(--blue);
+  padding: 1rem max(1rem, calc((100% - 1180px) / 2)) 0.5rem;
+}
+.page-gallery .brand { font-size: 1.35rem; color: rgba(255, 255, 255, 0.72); }
+/* Reset is destructive, so it sits apart and stays quiet until hovered. */
+.page-gallery .pill-danger {
+  margin-left: 0.5rem;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.78);
+  border-color: rgba(255, 255, 255, 0.45);
+  box-shadow: none;
+}
+.page-gallery .pill-danger:hover { background: var(--danger); color: #fff; border-color: var(--ink); box-shadow: 3px 3px 0 var(--ink); }
 .page-gallery .gallery-shell { padding-top: 0; }
 .page-gallery .gallery-head {
-  padding: 0.25rem 0 1.5rem;
-  margin-bottom: 2rem;
-  background: var(--blue);
-  box-shadow: 0 0 0 100vmax var(--blue);
-  clip-path: inset(0 -100vmax);
+  padding: 0.75rem 0 1.6rem;
+  margin-bottom: 2.75rem;
+  position: relative;
+  isolation: isolate;
 }
-.page-gallery .brand { color: #fff; }
+.page-gallery .gallery-head::before {
+  content: "";
+  position: absolute;
+  inset: -1px calc(50% - 50vw) 0;
+  z-index: -1;
+  background: var(--blue);
+}
 .page-gallery .gallery-head h1 { color: var(--sun); }
 .gallery-shell { width: min(1180px, calc(100% - 2rem)); margin: 0 auto; padding: 0.5rem 0 4rem; }
 .gallery-head { display: flex; align-items: end; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
 .gallery-head h1 { margin: 0; }
+.page-gallery .gallery-head { flex-direction: column; align-items: start; gap: 0.6rem; }
+.gallery-summary { margin: 0; font-size: 1.1rem; font-weight: 700; color: rgba(255, 255, 255, 0.85); }
+.gallery-summary:empty { display: none; }
 .nestie-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-  gap: 2rem 1.5rem;
+  gap: 2.5rem 1.75rem;
   align-items: start;
 }
 .nestie-card {
   display: grid;
   justify-items: center;
-  gap: 0.9rem;
+  padding: 0 7%;
   text-decoration: none;
   color: inherit;
   min-width: 0;
   grid-template-columns: minmax(0, 1fr);
 }
-.nestie-card .device { width: 82%; transition: transform 0.2s ease; }
+.nestie-card .device { transition: transform 0.2s ease; }
 .nestie-card:hover .device, .nestie-card:focus-visible .device { transform: translateY(-6px); }
 .nestie-card:focus-visible { outline: none; }
-.nestie-card:focus-visible .nestie-plate { box-shadow: var(--lift) var(--lift) 0 var(--blue); }
-.nestie-plate { width: 100%; text-align: center; padding: 0.75rem 0.9rem 0.85rem; }
-.nestie-name { margin: 0 0 0.25rem; font-size: 2.1rem; line-height: 1; }
-.nestie-goal { margin: 0 0 0.6rem; font-weight: 600; color: var(--ink-soft); font-size: 0.95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.nestie-status { margin: 0.5rem 0 0; font-size: 0.85rem; font-weight: 700; color: var(--ink-soft); }
-.nestie-card.is-dead .nestie-status { color: var(--danger); }
-.mini-xp { height: 12px; border: var(--line) solid var(--ink); border-radius: 4px; background: #fff; overflow: hidden; }
-.mini-xp span { display: block; height: 100%; background: var(--card-accent, var(--tangerine)); }
-.nestie-plate { background: color-mix(in srgb, var(--card-tint, #fff) 16%, #fff); }
+/* Title and device share one width, inset a little so neighbouring titles don't touch. */
+.nestie-card .device { width: 100%; }
+/* Same curved title as the pet page, tucked down onto the device's top edge. */
+.nestie-title { width: 100%; height: auto; overflow: visible; margin-bottom: -3%; position: relative; z-index: 1; transition: transform 0.2s ease; }
+.nestie-card:hover .nestie-title, .nestie-card:focus-visible .nestie-title { transform: translateY(-6px); }
+.nestie-card:focus-visible .pet-title-name { fill: var(--blue); }
+/* A dead pet's device turns grey and tips over; the screen inside already shows the pet at rest. */
+.nestie-card.is-dead .device { filter: grayscale(1); transform: rotate(-8deg); }
+.nestie-card.is-dead:hover .device, .nestie-card.is-dead:focus-visible .device { transform: translateY(-6px) rotate(-8deg); }
+.nestie-card.is-dead .pet-title-name, .nestie-card.is-dead .pet-title-goal { fill: var(--muted); }
+/* Cards are smaller than the pet page, so the goal line needs a bigger size to stay readable. */
+.nestie-title .pet-title-goal { font-size: 20px; }
+.nestie-new .nestie-title { margin-bottom: 3%; }
 .nestie-new {
   display: grid;
   justify-items: center;
   align-content: start;
-  gap: 0.9rem;
   border: none;
   background: none;
   cursor: pointer;
   font: inherit;
   color: var(--ink);
-  padding: 0;
+  padding: 0 7%;
   min-width: 0;
   grid-template-columns: minmax(0, 1fr);
 }
 .nestie-new-shape {
-  width: 82%;
+  width: 100%;
   aspect-ratio: 300 / 360;
   display: grid;
   place-items: center;
@@ -476,7 +529,10 @@ p { margin: 0 0 1rem; }
 }
 .nestie-new-shape .icon { font-size: clamp(3rem, 9vw, 4.5rem); }
 .nestie-new:hover .nestie-new-shape { transform: translateY(-6px); background: #fff; }
-.nestie-new .btn { pointer-events: none; }
+.nestie-new:hover .nestie-title { transform: translateY(-6px); }
+.nestie-new .pet-title-name { fill: var(--ink-soft); }
+.nestie-new:focus-visible { outline: none; }
+.nestie-new:focus-visible .nestie-new-shape { border-color: var(--blue); background: #fff; }
 
 /* Device chooser */
 .device-choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 0.4rem; }
@@ -551,7 +607,8 @@ p { margin: 0 0 1rem; }
   gap: 0.75rem;
   padding: 1rem 1.25rem;
   background: var(--blue);
-  border-bottom: var(--line) solid var(--ink);
+  position: relative;
+  margin-bottom: 26px;
 }
 .pet-card-head .eyebrow { margin: 0; font-size: 2.1rem; line-height: 1.1; color: var(--sun); }
 .pet-card-meta { margin: 0.15rem 0 0; font-size: 0.9rem; font-weight: 600; color: rgba(255, 255, 255, 0.82); }
@@ -604,11 +661,37 @@ p { margin: 0 0 1rem; }
   padding: 0.5rem 0.5rem 0.5rem 0.8rem;
   font-weight: 700;
 }
-/* Inside the pet card the journal reads as ruled rows rather than boxes. */
-.journal .entry-list { gap: 0; max-height: 340px; overflow-y: auto; }
-.journal .entry-list li { border: none; border-radius: 0; padding: 0.6rem 0.25rem 0.6rem 0; }
-.journal .entry-list li + li { border-top: 1px solid rgba(30, 26, 32, 0.1); }
+/* Inside the pet card the journal is a receipt slip: scalloped top and bottom edges,
+   and a dot leader running from each item to its amount. */
+.journal .entry-list {
+  gap: 0;
+  max-height: 340px;
+  overflow-y: auto;
+  padding: 0.9rem 0.9rem 1rem;
+  background: var(--sun-soft);
+  -webkit-mask: radial-gradient(circle 5px at 6px 0, #0000 98%, #000) top / 12px 51% repeat-x,
+                radial-gradient(circle 5px at 6px 100%, #0000 98%, #000) bottom / 12px 51% repeat-x;
+          mask: radial-gradient(circle 5px at 6px 0, #0000 98%, #000) top / 12px 51% repeat-x,
+                radial-gradient(circle 5px at 6px 100%, #0000 98%, #000) bottom / 12px 51% repeat-x;
+}
+.journal .entry-list li { border: none; border-radius: 0; background: none; padding: 0.55rem 0; align-items: baseline; }
+.journal .entry-list li + li { border-top: none; }
+.journal .entry-meta { flex: 0 1 auto; order: 1; }
+.journal .entry-list li::after {
+  content: "";
+  order: 2;
+  flex: 1 1 1.5rem;
+  min-width: 1.5rem;
+  height: 3px;
+  align-self: center;
+  margin-top: -1.1rem;
+  background: radial-gradient(circle, var(--ink-soft) 1.2px, transparent 1.6px) left center / 7px 3px repeat-x;
+  opacity: 0.6;
+}
+.journal .entry-amount { order: 3; }
+.journal .btn-remove { order: 4; align-self: center; }
 .journal .entry-list li.entry-empty { border: none; padding: 0.25rem 0; }
+.journal .entry-list li.entry-empty::after { content: none; }
 .entry-meta { display: grid; gap: 0.05rem; flex: 1; min-width: 0; }
 .entry-meta span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .entry-date { font-size: 0.82rem; font-weight: 700; color: var(--muted); }
@@ -639,7 +722,37 @@ p { margin: 0 0 1rem; }
 .memory-portrait { height: 84px; display: grid; place-items: center; }
 .memory-creature { width: 88px; }
 .memory-slot.is-locked { background: var(--cream); border-style: dashed; }
-.memory-slot.is-locked .memory-creature { filter: brightness(0) opacity(0.15); }
+/* Locked creatures show as a halftone silhouette. */
+.memory-slot.is-locked .memory-creature {
+  filter: brightness(0) opacity(0.3);
+  -webkit-mask: radial-gradient(circle, #000 1.5px, transparent 1.9px) 0 0 / 5px 5px;
+          mask: radial-gradient(circle, #000 1.5px, transparent 1.9px) 0 0 / 5px 5px;
+}
+/* Unlocked creatures are postage stamps: a perforated face over an offset ink copy of itself. */
+.memory-slot.is-unlocked {
+  --perf: radial-gradient(circle 4px at 6px 6px, #0000 96%, #000) -6px -6px / 12px 12px,
+          linear-gradient(#000 0 0) 6px 6px / calc(100% - 12px) calc(100% - 12px) no-repeat;
+  position: relative;
+  isolation: isolate;
+  border: none;
+  background: none;
+  overflow: visible;
+  padding: 0.85rem 0.6rem 0.8rem;
+}
+.memory-slot.is-unlocked::before,
+.memory-slot.is-unlocked::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  -webkit-mask: var(--perf);
+          mask: var(--perf);
+}
+.memory-slot.is-unlocked::before { background: var(--ink); transform: translate(3px, 3px); }
+.memory-slot.is-unlocked::after {
+  background: var(--sun-soft);
+  box-shadow: inset 0 0 0 8px var(--sun-soft), inset 0 0 0 10px rgba(30, 26, 32, 0.25);
+}
 .past-device { width: 46px; flex: none; }
 
 /* Animations */
@@ -679,7 +792,6 @@ p { margin: 0 0 1rem; }
   .device-choice { padding: 0.4rem 0.2rem 0.3rem; }
   .field-pair { grid-template-columns: 1fr; }
   .nestie-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem 0.9rem; }
-  .nestie-name { font-size: 1.6rem; }
   .memory-stages { grid-template-columns: repeat(2, minmax(90px, 1fr)); }
   .topbar { flex-wrap: wrap; }
 }

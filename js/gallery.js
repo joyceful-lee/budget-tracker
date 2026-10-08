@@ -31,21 +31,30 @@
     });
   });
 
+  // The name and goal curve over the top of the device, as on the pet page.
+  // Each card needs its own path ids for the textPaths to point at.
+  function arcTitle(key) {
+    const id = "arc-" + String(key).replace(/[^\w-]/g, "");
+    return '<svg class="pet-title nestie-title" viewBox="0 0 300 92" aria-hidden="true"><defs>' +
+      '<path id="' + id + '-name" d="M0 148 A170 170 0 0 1 300 148"/>' +
+      '<path id="' + id + '-goal" d="M20 176 A140 140 0 0 1 280 176"/></defs>' +
+      '<text class="pet-title-name"><textPath href="#' + id + '-name" startOffset="50%" text-anchor="middle"></textPath></text>' +
+      '<text class="pet-title-goal"><textPath href="#' + id + '-goal" startOffset="50%" text-anchor="middle"></textPath></text></svg>';
+  }
+
+  function setArcText(el, name, goal) {
+    const paths = el.querySelectorAll(".nestie-title textPath");
+    paths[0].textContent = name;
+    // The goal arc only fits about two dozen characters at card size.
+    paths[1].textContent = goal.length > 24 ? goal.slice(0, 23).trim() + "…" : goal;
+  }
+
   function nestieCard(pet) {
     const card = document.createElement("a");
     card.className = "nestie-card" + (pet.creature.alive ? "" : " is-dead");
-    // The name plate takes its device's colors.
-    const colors = KipDevice.COLORWAYS[KipDevice.resolve(pet.device).colorway];
-    card.style.setProperty("--card-tint", colors.shell);
-    card.style.setProperty("--card-accent", colors.button);
     card.href = "pet.html?id=" + encodeURIComponent(pet.id);
-    card.innerHTML = KipDevice.markup(pet.device, { screen: KipDevice.screenMarkup(pet) }) +
-      '<div class="nestie-plate panel"><h2 class="nestie-name"></h2><p class="nestie-goal"></p>' +
-      '<div class="mini-xp"><span></span></div><p class="nestie-status"></p></div>';
-    card.querySelector(".nestie-name").textContent = pet.petName;
-    card.querySelector(".nestie-goal").textContent = "Saving for " + pet.goal.label;
-    card.querySelector(".mini-xp span").style.width = Math.round(KipFinance.progress(pet) * 100) + "%";
-    card.querySelector(".nestie-status").textContent = KipCreature.statusLine(pet);
+    card.innerHTML = arcTitle(pet.id) + KipDevice.markup(pet.device, { screen: KipDevice.screenMarkup(pet) });
+    setArcText(card, pet.petName, "Saving for " + pet.goal.label);
     card.setAttribute("aria-label", pet.petName + ", saving for " + pet.goal.label);
     return card;
   }
@@ -54,13 +63,27 @@
     const data = KipCreature.sync();
     grid.innerHTML = "";
     data.pets.forEach(function (pet) { grid.appendChild(nestieCard(pet)); });
+    renderSummary(data.pets);
 
     const add = document.createElement("button");
     add.type = "button";
     add.className = "nestie-new";
-    add.innerHTML = '<span class="nestie-new-shape">' + PLUS_ICON + '</span><span class="btn btn-sun">New ' + KipDevice.NAME + "</span>";
+    add.innerHTML = arcTitle("new") + '<span class="nestie-new-shape">' + PLUS_ICON + "</span>";
+    setArcText(add, "New", "Hatch a " + KipDevice.NAME);
     add.addEventListener("click", function () { showOnboarding(true); });
     grid.appendChild(add);
+  }
+
+  // One line under the title: how many pets and what they've saved together.
+  function renderSummary(pets) {
+    const summary = document.getElementById("gallery-summary");
+    if (!pets.length) {
+      summary.textContent = "Hatch your first " + KipDevice.NAME + " to start saving.";
+      return;
+    }
+    const total = pets.reduce(function (sum, pet) { return sum + KipFinance.saved(pet); }, 0);
+    summary.textContent = pets.length + " " + KipDevice.NAME + (pets.length === 1 ? "" : "s") +
+      " · " + KipFinance.formatMoney(total) + " saved so far";
   }
 
   function renderChoices() {
