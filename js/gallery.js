@@ -68,7 +68,17 @@
     const add = document.createElement("button");
     add.type = "button";
     add.className = "nestie-new";
-    add.innerHTML = arcTitle("new") + '<span class="nestie-new-shape">' + PLUS_ICON + "</span>";
+    // Same egg path and viewBox as a real device, so the blank slot matches other Budgies.
+    add.innerHTML = arcTitle("new") +
+      '<span class="device nestie-new-device">' +
+        '<svg class="device-shell nestie-new-shell" viewBox="0 0 300 360" aria-hidden="true">' +
+          '<g class="nestie-new-outline" fill="rgba(255,255,255,0.5)" stroke="#1e1a20" stroke-width="4" ' +
+            'stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="0 12">' +
+            KipDevice.SHAPES.egg.body +
+          "</g>" +
+        "</svg>" +
+        '<span class="nestie-new-plus">' + PLUS_ICON + "</span>" +
+      "</span>";
     setArcText(add, "New", "Hatch a " + KipDevice.NAME);
     add.addEventListener("click", function () { showOnboarding(true); });
     grid.appendChild(add);

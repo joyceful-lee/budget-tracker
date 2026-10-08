@@ -518,7 +518,6 @@ p { margin: 0 0 1rem; }
 .nestie-card.is-dead .pet-title-name, .nestie-card.is-dead .pet-title-goal { fill: var(--muted); }
 /* Cards are smaller than the pet page, so the goal line needs a bigger size to stay readable. */
 .nestie-title .pet-title-goal { font-size: 20px; }
-.nestie-new .nestie-title { margin-bottom: 3%; }
 .nestie-new {
   display: grid;
   justify-items: center;
@@ -532,22 +531,27 @@ p { margin: 0 0 1rem; }
   min-width: 0;
   grid-template-columns: minmax(0, 1fr);
 }
-.nestie-new-shape {
+/* Blank slot uses the real egg device path, so it matches other Budgies in size. */
+.nestie-new-device {
   width: 100%;
-  aspect-ratio: 300 / 360;
+  transition: transform 0.2s ease;
+}
+.nestie-new-shell { filter: none; }
+.nestie-new-outline { transition: fill 0.2s ease, stroke 0.2s ease; }
+.nestie-new-plus {
+  position: absolute;
+  inset: 0;
   display: grid;
   place-items: center;
-  border: 3px dashed var(--ink);
-  border-radius: 50% 50% 46% 46% / 58% 58% 42% 42%;
-  background: rgba(255, 255, 255, 0.5);
-  transition: transform 0.2s ease, background 0.2s ease;
+  pointer-events: none;
 }
-.nestie-new-shape .icon { font-size: clamp(3rem, 9vw, 4.5rem); }
-.nestie-new:hover .nestie-new-shape { transform: translateY(-6px); background: #fff; }
+.nestie-new-plus .icon { font-size: clamp(3rem, 9vw, 4.5rem); }
+.nestie-new:hover .nestie-new-device { transform: translateY(-6px); }
+.nestie-new:hover .nestie-new-outline { fill: #fff; }
 .nestie-new:hover .nestie-title { transform: translateY(-6px); }
 .nestie-new .pet-title-name { fill: var(--ink-soft); }
 .nestie-new:focus-visible { outline: none; }
-.nestie-new:focus-visible .nestie-new-shape { border-color: var(--blue); background: #fff; }
+.nestie-new:focus-visible .nestie-new-outline { stroke: var(--blue); fill: #fff; }
 
 /* Device chooser */
 .device-choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 0.4rem; }
