@@ -236,8 +236,7 @@ const KipCreature = (function () {
     const c = pet.creature;
     if (!c.alive || isComplete(pet)) return null;
     if (c.starvingSince) {
-      const left = hearts(pet);
-      return { level: "danger", icon: "heart_broken", text: "Starving, " + left + (left === 1 ? " heart" : " hearts") + " left" };
+      return { level: "danger", icon: "heart_broken", text: "Starving" };
     }
     const days = Math.round((new Date(pet.goal.deadline + "T12:00:00") - new Date(KipFinance.todayIso() + "T12:00:00")) / KipFinance.DAY_MS);
     if (days <= DUE_SOON_DAYS) {
