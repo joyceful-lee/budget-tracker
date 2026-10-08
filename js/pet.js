@@ -30,12 +30,12 @@
   const reviveTitle = document.getElementById("revive-title");
   const reviveCopy = document.getElementById("revive-copy");
   const revivePortrait = document.getElementById("revive-portrait");
-  const reviveDeadlineWrap = document.getElementById("revive-deadline-wrap");
-  const reviveError = document.getElementById("revive-error");
   const growthModal = document.getElementById("growth-modal");
   const growthReveal = document.getElementById("growth-reveal");
   const growthTitle = document.getElementById("growth-title");
   const growthCopy = document.getElementById("growth-copy");
+  const hungerModal = document.getElementById("hunger-modal");
+  const hungerRules = document.getElementById("hunger-rules");
 
   // Remember whether the pet was alive at the last render so a death pops the revive modal once.
   let wasAlive = null;
@@ -234,16 +234,12 @@
 
   function showRevive() {
     const pet = currentPet();
-    const expired = KipFinance.daysLeft(pet) <= 0;
     reviveTitle.textContent = pet.petName + " Has Passed Away";
     revivePortrait.innerHTML = KipCreature.petMarkup(pet, "creature growth-creature");
-    reviveCopy.textContent = pet.creature.deathReason === "deadline"
-      ? "The deadline arrived before " + pet.goal.label + " was fully saved, so choose a new deadline to bring " + pet.petName + " back."
+    reviveCopy.textContent = KipFinance.daysLeft(pet) <= 0
+      ? "The deadline arrived before " + pet.goal.label + " was fully saved. Reviving " + pet.petName +
+        " moves the deadline to " + KipFinance.formatDate(KipCreature.extendedDeadline(pet)) + "."
       : pet.petName + " went hungry for too long.";
-    reviveDeadlineWrap.hidden = !expired;
-    reviveForm.deadline.min = KipFinance.todayIso(1);
-    reviveForm.deadline.value = "";
-    reviveError.textContent = "";
     openModal(reviveModal);
   }
 
@@ -295,21 +291,55 @@
   submitMoney(formIn, "in");
   submitMoney(formOut, "out");
 
+  function showHungerRules() {
+    const name = currentPet().petName;
+    const rules = [
+      ["restaurant", "What is Hunger?",
+        name + " goes from full to empty in " + KipCreature.HOURS_TO_EMPTY + " hours. Feeding " + name +
+        " by saving money will make them full again. " + name + " will be full forever once you hit the savings goal."],
+      ["favorite", "What Do Hearts Do?",
+        "For every 24 hours that " + name + " is completely hungry, " + name + " will lose 1 heart. If " + name +
+        " goes hungry for " + KipCreature.HEARTS + " days straight, they'll pass away!"],
+      ["healing", "Is Passing Away Forever?",
+        "No. You can choose to revive " + name + " if they die, but the " + KipDevice.NAME +
+        " will count how many times you had to revive them."],
+      ["event_busy", "What If I Miss the Deadline?",
+        name + " will pass away if you don't save up enough money before the deadline. If you revive " + name +
+        " afterwards, your deadline will be extended by 1 week."]
+    ];
+    hungerRules.innerHTML = "";
+    rules.forEach(function (rule) {
+      const li = document.createElement("li");
+      const icon = document.createElement("span");
+      icon.className = "rule-icon";
+      icon.innerHTML = '<span class="icon" aria-hidden="true"></span>';
+      icon.firstChild.textContent = rule[0];
+      const body = document.createElement("div");
+      const title = document.createElement("strong");
+      title.textContent = rule[1];
+      const text = document.createElement("p");
+      text.textContent = rule[2];
+      body.appendChild(title);
+      body.appendChild(text);
+      li.appendChild(icon);
+      li.appendChild(body);
+      hungerRules.appendChild(li);
+    });
+    openModal(hungerModal);
+  }
+
+  document.getElementById("hunger-info").addEventListener("click", showHungerRules);
+
   document.getElementById("open-revive").addEventListener("click", showRevive);
 
   reviveForm.addEventListener("submit", function (e) {
     e.preventDefault();
-    const deadline = reviveForm.deadline.value;
-    if (!reviveDeadlineWrap.hidden && (!deadline || deadline <= KipFinance.todayIso())) {
-      reviveError.textContent = "Pick a new deadline after today.";
-      return;
-    }
-    const result = KipCreature.revive(petId, deadline);
-    if (!result.ok) {
-      reviveError.textContent = "That deadline didn't work, so please try a later date.";
-      return;
-    }
+    const result = KipCreature.revive(petId);
     closeModal(reviveModal);
+    if (!result.ok) {
+      render();
+      return;
+    }
     const pet = currentPet();
     feedback.textContent = pet.petName + " has been revived.";
     render();

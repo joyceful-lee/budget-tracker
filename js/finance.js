@@ -38,27 +38,6 @@ const KipFinance = (function () {
     return (deadlineEnd(data.goal) - (now || Date.now())) / DAY_MS;
   }
 
-  /** A full belly empties in 1–3 days; tighter deadlines make the pet hungrier faster. */
-  function hoursToEmpty(data, now) {
-    return Math.max(24, Math.min(72, daysLeft(data, now) * 2));
-  }
-
-  /** The amount that fills the pet from empty: what you need to save per hunger cycle to stay on pace. */
-  function fullMeal(data) {
-    const perDay = remaining(data) / Math.max(1, daysLeft(data));
-    return Math.max(1, perDay * hoursToEmpty(data) / 24);
-  }
-
-  /** The deposit that tops the pet up to completely full from its current fullness. */
-  function amountToFill(data, fullness) {
-    return Math.max(0.01, Math.ceil(fullMeal(data) * (100 - fullness)) / 100);
-  }
-
-  /** Fullness points a deposit restores. Any deposit counts for at least a snack. */
-  function feedPoints(data, amount) {
-    return Math.max(15, Math.min(100, Math.round(100 * amount / fullMeal(data))));
-  }
-
   function formatMoney(value) {
     const n = Number(value) || 0;
     const sign = n < 0 ? "-" : "";
@@ -72,10 +51,21 @@ const KipFinance = (function () {
     return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
   }
 
+  function isoDate(d) {
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+
   function todayIso(offsetDays) {
     const d = new Date();
     d.setDate(d.getDate() + (offsetDays || 0));
-    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    return isoDate(d);
+  }
+
+  /** The ISO date a number of days after another ISO date. */
+  function addDaysIso(iso, days) {
+    const d = new Date(iso + "T12:00:00");
+    d.setDate(d.getDate() + days);
+    return isoDate(d);
   }
 
   return {
@@ -87,12 +77,9 @@ const KipFinance = (function () {
     remaining,
     deadlineEnd,
     daysLeft,
-    hoursToEmpty,
-    fullMeal,
-    amountToFill,
-    feedPoints,
     formatMoney,
     formatDate,
-    todayIso
+    todayIso,
+    addDaysIso
   };
 })();

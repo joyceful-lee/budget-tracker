@@ -2,8 +2,15 @@ const KipCreature = (function () {
   /** The ages a pet grows through as its goal fills. */
   const GOAL_STAGES = ["baby", "teen", "adult"];
   const HOUR_MS = 3600000;
-  /** How long a pet can sit at zero fullness before it dies. */
-  const STARVE_GRACE_HOURS = 24;
+  /** A full belly empties in this many hours. */
+  const HOURS_TO_EMPTY = 24;
+  /** A pet at zero fullness loses one heart per day, and dies when the last one is gone. */
+  const HEARTS = 4;
+  const HOURS_PER_HEART = 24;
+  /** Reviving a pet that missed its deadline pushes the deadline back this many days. */
+  const DEADLINE_EXTENSION_DAYS = 7;
+  /** A goal this many days or fewer from its deadline gets a warning on the gallery. */
+  const DUE_SOON_DAYS = 3;
   /** Fullness at or above this counts as full, matching the happy mood. */
   const FULL_THRESHOLD = 60;
 
@@ -41,7 +48,7 @@ const KipCreature = (function () {
     c.diedAt = at;
   }
 
-  /** Advance hunger to now and apply starvation or a missed deadline. */
+  /** Advance hunger to now and apply starvation or a missed deadline, whichever came first. */
   function tick(pet) {
     const c = pet.creature;
     const now = Date.now();
@@ -51,7 +58,7 @@ const KipCreature = (function () {
     }
 
     const last = c.lastTick || now;
-    const perHour = 100 / KipFinance.hoursToEmpty(pet, last);
+    const perHour = 100 / HOURS_TO_EMPTY;
     const before = c.fullness;
     c.fullness = clamp(before - perHour * (now - last) / HOUR_MS);
     if (c.fullness <= 0 && !c.starvingSince) {
@@ -59,11 +66,25 @@ const KipCreature = (function () {
     }
     c.lastTick = now;
 
-    const starvedAt = c.starvingSince ? c.starvingSince + STARVE_GRACE_HOURS * HOUR_MS : Infinity;
+    const starvedAt = c.starvingSince ? c.starvingSince + HEARTS * HOURS_PER_HEART * HOUR_MS : Infinity;
     const dueAt = KipFinance.deadlineEnd(pet.goal);
     if (starvedAt <= now && starvedAt <= dueAt) die(pet, "starved", starvedAt);
     else if (dueAt <= now) die(pet, "deadline", dueAt);
     return pet;
+  }
+
+  /** Hearts left: all of them until the belly is empty, then one fewer for each full day spent hungry. */
+  function hearts(pet) {
+    const c = pet.creature;
+    if (!c.alive) return 0;
+    if (!c.starvingSince) return HEARTS;
+    return Math.max(0, HEARTS - Math.floor((Date.now() - c.starvingSince) / (HOURS_PER_HEART * HOUR_MS)));
+  }
+
+  /** Hours until a starving pet loses its next heart. */
+  function hoursToNextHeart(pet) {
+    const hungryHours = (Date.now() - pet.creature.starvingSince) / HOUR_MS;
+    return Math.max(1, Math.ceil(HOURS_PER_HEART - hungryHours % HOURS_PER_HEART));
   }
 
   /** Evolve and complete based on saved progress. Pets never de-evolve. */
@@ -114,9 +135,9 @@ const KipCreature = (function () {
     return id;
   }
 
-  /** Log money in or out. Money in also feeds the pet. A dead pet blocks logging until revived. */
+  /** Log money in or out. Any money in fills the pet back up. A dead pet blocks logging until revived. */
   function logMoney(id, type, label, amount) {
-    let result = { ok: false, fed: 0, grew: false, completed: false };
+    let result = { ok: false, fed: false, grew: false, completed: false };
     KipStorage.updatePet(id, function (pet, data) {
       tick(pet);
       if (!pet.creature.alive) return;
@@ -130,10 +151,9 @@ const KipCreature = (function () {
       });
       const c = pet.creature;
       if (type === "in" && !isComplete(pet)) {
-        const points = KipFinance.feedPoints(pet, amount);
-        c.fullness = clamp(c.fullness + points);
+        c.fullness = 100;
         c.starvingSince = null;
-        result.fed = points;
+        result.fed = true;
       }
       Object.assign(result, checkGrowth(pet, data));
     });
@@ -147,18 +167,18 @@ const KipCreature = (function () {
     });
   }
 
-  /** Bring a pet back. A missed deadline needs a new one. */
-  function revive(id, newDeadline) {
+  /**
+   * Bring a pet back. The revive count stays with the pet. A passed deadline moves a week
+   * past today, or past the old deadline if that is later, so the pet doesn't die again at once.
+   */
+  function revive(id) {
     let result = { ok: false, grew: false, completed: false };
     KipStorage.updatePet(id, function (pet, data) {
       const c = pet.creature;
       if (c.alive) return;
-      if (KipFinance.daysLeft(pet) <= 0) {
-        if (!newDeadline || newDeadline <= KipFinance.todayIso()) return;
-        pet.goal.deadline = newDeadline;
-      }
+      if (KipFinance.daysLeft(pet) <= 0) pet.goal.deadline = extendedDeadline(pet);
       c.alive = true;
-      c.fullness = 60;
+      c.fullness = 100;
       c.starvingSince = null;
       c.diedAt = null;
       c.deathReason = "";
@@ -201,21 +221,50 @@ const KipCreature = (function () {
     return "hungry";
   }
 
+  /** The deadline a revive would set for a pet whose deadline has passed. */
+  function extendedDeadline(pet) {
+    const today = KipFinance.todayIso();
+    const from = pet.goal.deadline > today ? pet.goal.deadline : today;
+    return KipFinance.addDaysIso(from, DEADLINE_EXTENSION_DAYS);
+  }
+
+  /**
+   * The warning a gallery card shows, or null when the pet is fine. Starving and a close
+   * deadline can both end in the pet passing away, so they outrank plain hunger.
+   */
+  function alertFor(pet) {
+    const c = pet.creature;
+    if (!c.alive || isComplete(pet)) return null;
+    if (c.starvingSince) {
+      const left = hearts(pet);
+      return { level: "danger", icon: "heart_broken", text: "Starving, " + left + (left === 1 ? " heart" : " hearts") + " left" };
+    }
+    const days = Math.round((new Date(pet.goal.deadline + "T12:00:00") - new Date(KipFinance.todayIso() + "T12:00:00")) / KipFinance.DAY_MS);
+    if (days <= DUE_SOON_DAYS) {
+      const when = days <= 0 ? "today" : days === 1 ? "tomorrow" : "in " + days + " days";
+      return { level: "danger", icon: "event_busy", text: "Goal due " + when };
+    }
+    if (mood(pet) === "hungry") return { level: "hungry", icon: "restaurant", text: "Hungry" };
+    return null;
+  }
+
   /** One line on how full the pet is or what it needs, shared by the gallery and the pet page. */
   function statusLine(pet) {
     const c = pet.creature;
     if (!c.alive) return pet.petName + " has passed away.";
     if (isComplete(pet)) return pet.petName + " reached the goal.";
-    const toFill = KipFinance.formatMoney(KipFinance.amountToFill(pet, c.fullness));
     if (c.starvingSince) {
-      const hoursLeft = Math.ceil(Math.max(0, STARVE_GRACE_HOURS - (Date.now() - c.starvingSince) / HOUR_MS));
-      return "Log " + toFill + " within " + hoursLeft + (hoursLeft === 1 ? " hour" : " hours") + " to keep " + pet.petName + " alive.";
+      const hours = hoursToNextHeart(pet);
+      const within = "Save money within " + hours + (hours === 1 ? " hour" : " hours");
+      return hearts(pet) === 1
+        ? within + " to keep " + pet.petName + " alive."
+        : within + " before " + pet.petName + " loses a heart.";
     }
     if (c.fullness >= FULL_THRESHOLD) {
-      const hours = Math.ceil((c.fullness - FULL_THRESHOLD) / 100 * KipFinance.hoursToEmpty(pet));
+      const hours = Math.ceil((c.fullness - FULL_THRESHOLD) / 100 * HOURS_TO_EMPTY);
       return "Full for " + hours + (hours === 1 ? " more hour" : " more hours");
     }
-    return "Log " + toFill + " to feed " + pet.petName + ".";
+    return "Save money to feed " + pet.petName + ".";
   }
 
   /*
@@ -265,7 +314,9 @@ const KipCreature = (function () {
 
   return {
     GOAL_STAGES,
-    STARVE_GRACE_HOURS,
+    HOURS_TO_EMPTY,
+    HEARTS,
+    extendedDeadline,
     sync,
     hatch,
     logMoney,
@@ -274,6 +325,8 @@ const KipCreature = (function () {
     retire,
     isComplete,
     mood,
+    alertFor,
+    hearts,
     statusLine,
     petMarkup,
     eggMarkup

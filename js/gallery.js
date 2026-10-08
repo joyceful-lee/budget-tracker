@@ -60,13 +60,19 @@
     const card = document.createElement("a");
     const complete = KipCreature.isComplete(pet);
     const percent = Math.floor(KipFinance.progress(pet) * 100);
-    card.className = "nestie-card" + (pet.creature.alive ? "" : " is-dead") + (complete ? " is-complete" : "");
+    const alert = KipCreature.alertFor(pet);
+    card.className = "nestie-card" + (pet.creature.alive ? "" : " is-dead") + (complete ? " is-complete" : "") +
+      (alert ? " is-" + alert.level : "");
     card.href = "pet.html?id=" + encodeURIComponent(pet.id);
     card.innerHTML = arcTitle(pet.id) + KipDevice.markup(pet.device, { screen: KipDevice.screenMarkup(pet) }) +
-      (complete ? '<span class="nestie-stamp" aria-hidden="true">Goal<br>met</span>' : "");
+      (complete ? '<span class="nestie-stamp" aria-hidden="true">Goal<br>met</span>' : "") +
+      (alert ? '<span class="nestie-alert" aria-hidden="true"><span class="icon">' + alert.icon + "</span><span></span></span>" : "") +
+      (pet.creature.alive ? "" : '<span class="nestie-alert" aria-hidden="true"><span class="icon">heart_broken</span><span>Passed away</span></span>');
+    if (alert) card.querySelector(".nestie-alert span:last-child").textContent = alert.text;
     setArcText(card, pet.petName, (complete ? "Saved for " : "Saving for ") + pet.goal.label, " (" + percent + "%)");
     card.setAttribute("aria-label", pet.petName + ", " + (complete ? "goal met: saved for " : "saving for ") +
-      pet.goal.label + ", " + percent + "% saved");
+      pet.goal.label + ", " + percent + "% saved" + (alert ? ", " + alert.text.toLowerCase() : "") +
+      (pet.creature.alive ? "" : ", passed away"));
     return card;
   }
 

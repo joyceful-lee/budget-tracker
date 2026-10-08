@@ -225,8 +225,8 @@ const KipDevice = (function () {
     const mood = KipCreature.mood(pet);
     const c = pet.creature;
     const hearts = [];
-    const filled = c.alive ? Math.ceil(c.fullness / 25) : 0;
-    for (let i = 0; i < 4; i++) {
+    const filled = KipCreature.hearts(pet);
+    for (let i = 0; i < KipCreature.HEARTS; i++) {
       hearts.push('<svg class="lcd-heart' + (i < filled ? " is-full" : "") + '" viewBox="0 0 7 6" aria-hidden="true">' + HEART_DOTS + "</svg>");
     }
     const percent = Math.floor(KipFinance.progress(pet) * 100);
