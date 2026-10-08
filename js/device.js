@@ -11,15 +11,16 @@ const KipDevice = (function () {
    * Shell colors come from the Slicko-8 palette (lospec.com/palette-list/slicko-8); each colorway's
    * pattern and buttons use other colors from the same palette.
    */
+  // shade / buttonShade are multiply colors for the lower shell and buttons.
   const COLORWAYS = {
-    amethyst: { label: "Amethyst", shell: "#8f43c6", shell2: "#8f43c6", accent: "#e8ea60", button: "#4ae3bf", bezel: "#f6fbd9" },
-    orchid: { label: "Orchid", shell: "#df4fcd", shell2: "#df4fcd", accent: "#f6fbd9", button: "#e8ea60", bezel: "#f6fbd9" },
-    amber: { label: "Amber", shell: "#ed9f2a", shell2: "#ed9f2a", accent: "#f6fbd9", button: "#5d51d7", bezel: "#f6fbd9" },
-    lemon: { label: "Lemon", shell: "#e8ea60", shell2: "#e8ea60", accent: "#ed9f2a", button: "#8f43c6", bezel: "#f6fbd9" },
-    mint: { label: "Mint", shell: "#4ae3bf", shell2: "#4ae3bf", accent: "#f6fbd9", button: "#df4fcd", bezel: "#f6fbd9" },
-    indigo: { label: "Indigo", shell: "#5d51d7", shell2: "#5d51d7", accent: "#4ae3bf", button: "#ed9f2a", bezel: "#f6fbd9" },
-    cream: { label: "Cream", shell: "#f6fbd9", shell2: "#f6fbd9", accent: "#df4fcd", button: "#5d51d7", bezel: "#ffffff" },
-    slick: { label: "Slick", shell: "#1e1a20", shell2: "#1e1a20", accent: "#8f43c6", button: "#e8ea60", bezel: "#f6fbd9" }
+    amethyst: { label: "Amethyst", shell: "#8f43c6", shell2: "#8f43c6", shade: "#6b3a9e", accent: "#e8ea60", button: "#4ae3bf", buttonShade: "#5d51d7", bezel: "#f6fbd9" },
+    orchid: { label: "Orchid", shell: "#df4fcd", shell2: "#df4fcd", shade: "#6b3a9e", accent: "#f6fbd9", button: "#e8ea60", buttonShade: "#3ec4a8", bezel: "#f6fbd9" },
+    amber: { label: "Amber", shell: "#ed9f2a", shell2: "#ed9f2a", shade: "#df4fcd", accent: "#f6fbd9", button: "#5d51d7", buttonShade: "#6b3a9e", bezel: "#f6fbd9" },
+    lemon: { label: "Lemon", shell: "#e8ea60", shell2: "#e8ea60", shade: "#3ec4a8", accent: "#ed9f2a", button: "#8f43c6", buttonShade: "#6b3a9e", bezel: "#f6fbd9" },
+    mint: { label: "Mint", shell: "#4ae3bf", shell2: "#4ae3bf", shade: "#5d51d7", accent: "#f6fbd9", button: "#df4fcd", buttonShade: "#6b3a9e", bezel: "#f6fbd9" },
+    indigo: { label: "Indigo", shell: "#5d51d7", shell2: "#5d51d7", shade: "#6b3a9e", accent: "#4ae3bf", button: "#ed9f2a", buttonShade: "#df4fcd", bezel: "#f6fbd9" },
+    cream: { label: "Cream", shell: "#f6fbd9", shell2: "#f6fbd9", shade: "#c4b01a", accent: "#df4fcd", button: "#5d51d7", buttonShade: "#6b3a9e", bezel: "#ffffff" },
+    slick: { label: "Slick", shell: "#1e1a20", shell2: "#1e1a20", shade: "#1e1a20", accent: "#8f43c6", button: "#e8ea60", buttonShade: "#3ec4a8", bezel: "#f6fbd9" }
   };
   /** Colorways from older saves map to the closest Slicko-8 colorway. */
   const COLORWAY_ALIASES = {
@@ -131,12 +132,14 @@ const KipDevice = (function () {
 
   function patternDef(id, name, c) {
     const a = c.accent, b = c.button;
-    const open = function (w, h, extra) {
-      return '<pattern id="' + id + '" width="' + w + '" height="' + h + '" patternUnits="userSpaceOnUse"' + (extra || "") + ">";
+    // Patterns read at 6x so the motifs stay bold on the larger shell look.
+    const open = function (w, h, rotate) {
+      const transform = "scale(6)" + (rotate ? " rotate(" + rotate + ")" : "");
+      return '<pattern id="' + id + '" width="' + w + '" height="' + h + '" patternUnits="userSpaceOnUse" patternTransform="' + transform + '">';
     };
     switch (name) {
       case "stripes":
-        return open(22, 22, ' patternTransform="rotate(38)"') + '<rect width="9" height="22" fill="' + a + '"/></pattern>';
+        return open(22, 22, 38) + '<rect width="9" height="22" fill="' + a + '"/></pattern>';
       case "checks":
         return open(28, 28) + '<rect width="14" height="14" fill="' + a + '"/><rect x="14" y="14" width="14" height="14" fill="' + a + '"/></pattern>';
       case "stars":
@@ -251,29 +254,86 @@ const KipDevice = (function () {
     const s = shape.screen;
     const bz = 12;
 
+    // Top quarter lifts toward a lighter base; a per-colorway multiply shade darkens the lower half.
+    const shellLite = lighten(c.shell, 0.55);
+    const buttonLite = lighten(c.button, 0.55);
     let svg = '<svg class="device-shell" viewBox="0 0 ' + VIEW_W + " " + VIEW_H + '" aria-hidden="true">' +
       "<defs>" +
-      '<linearGradient id="' + uid + 'g" x1="0" y1="0" x2="0.4" y2="1"><stop offset="0" stop-color="' + c.shell + '"/><stop offset="1" stop-color="' + c.shell2 + '"/></linearGradient>' +
+      '<linearGradient id="' + uid + 'g" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0" stop-color="' + shellLite + '"/>' +
+        '<stop offset="0.25" stop-color="' + c.shell + '"/>' +
+        '<stop offset="1" stop-color="' + c.shell + '"/>' +
+      "</linearGradient>" +
+      // White leaves the base alone; the colorway shade multiplies in toward the bottom.
+      '<linearGradient id="' + uid + 'm" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0" stop-color="#ffffff"/>' +
+        '<stop offset="0.5" stop-color="#ffffff"/>' +
+        '<stop offset="1" stop-color="' + c.shade + '"/>' +
+      "</linearGradient>" +
+      // Buttons share the same lighting recipe as the shell.
+      '<linearGradient id="' + uid + 'bg" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0" stop-color="' + buttonLite + '"/>' +
+        '<stop offset="0.25" stop-color="' + c.button + '"/>' +
+        '<stop offset="1" stop-color="' + c.button + '"/>' +
+      "</linearGradient>" +
+      '<linearGradient id="' + uid + 'bm" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0" stop-color="#ffffff"/>' +
+        '<stop offset="0.5" stop-color="#ffffff"/>' +
+        '<stop offset="1" stop-color="' + c.buttonShade + '"/>' +
+      "</linearGradient>" +
+      // Screen border: same lighting flipped, dark on top and lighter toward the bottom.
+      '<linearGradient id="' + uid + 'sg" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0" stop-color="' + c.button + '"/>' +
+        '<stop offset="0.75" stop-color="' + c.button + '"/>' +
+        '<stop offset="1" stop-color="' + buttonLite + '"/>' +
+      "</linearGradient>" +
+      '<linearGradient id="' + uid + 'sm" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0" stop-color="' + c.buttonShade + '"/>' +
+        '<stop offset="0.5" stop-color="#ffffff"/>' +
+        '<stop offset="1" stop-color="#ffffff"/>' +
+      "</linearGradient>" +
       patternDef(uid + "p", d.pattern, c) +
       '<clipPath id="' + uid + 'c">' + shape.body + "</clipPath>" +
       '<radialGradient id="' + uid + 'h" cx=".3" cy=".2" r=".6"><stop offset="0" stop-color="#fff" stop-opacity=".75"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>' +
-      "</defs>";
+      '<radialGradient id="' + uid + 'bh" cx=".3" cy=".2" r=".6"><stop offset="0" stop-color="#fff" stop-opacity=".75"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>';
+    const b = shape.buttons;
+    b.xs.forEach(function (x, i) {
+      svg += '<clipPath id="' + uid + "bc" + i + '"><circle cx="' + x + '" cy="' + b.y + '" r="' + b.r + '"/></clipPath>';
+    });
+    const bezel = { x: s.x - bz, y: s.y - bz, w: s.w + bz * 2, h: s.h + bz * 2, rx: 24 };
+    svg += '<clipPath id="' + uid + 'sc"><rect x="' + bezel.x + '" y="' + bezel.y + '" width="' + bezel.w + '" height="' + bezel.h + '" rx="' + bezel.rx + '"/></clipPath>';
+    svg += "</defs>";
 
     // A 4px stroke under the fills leaves a 2px border outside the shell at any size.
-    svg += '<g fill="none" stroke="' + darken(c.shell2, 0.2) + '" stroke-width="4" stroke-linejoin="round" vector-effect="non-scaling-stroke">' + shape.body + "</g>" +
-      '<g fill="url(#' + uid + 'g)">' + shape.body + "</g>" +
-      '<g fill="url(#' + uid + 'p)" opacity=".55">' + shape.body + "</g>" +
+    // Isolate so the multiply shade only hits the shell fill, not the page behind it.
+    svg += '<g fill="none" stroke="' + darken(c.shell, 0.45) + '" stroke-width="4" stroke-linejoin="round" vector-effect="non-scaling-stroke">' + shape.body + "</g>" +
+      '<g style="isolation:isolate">' +
+        '<g fill="url(#' + uid + 'g)">' + shape.body + "</g>" +
+        '<g fill="url(#' + uid + 'p)" opacity=".55">' + shape.body + "</g>" +
+        '<g fill="url(#' + uid + 'm)" style="mix-blend-mode:multiply">' + shape.body + "</g>" +
+        '<g clip-path="url(#' + uid + 'c)"><ellipse cx="96" cy="96" rx="96" ry="70" fill="url(#' + uid + 'h)"/></g>' +
+      "</g>" +
+      // Inset ring: an 8px centered stroke clipped to the shell leaves 4px inside.
+      '<g clip-path="url(#' + uid + 'c)" fill="none" stroke="' + c.shell + '" stroke-width="8" stroke-linejoin="round" vector-effect="non-scaling-stroke">' + shape.body + "</g>" +
       (shape.extra ? shape.extra(c) : "") +
-      '<g clip-path="url(#' + uid + 'c)"><ellipse cx="96" cy="96" rx="96" ry="70" fill="url(#' + uid + 'h)"/>' +
-      '<ellipse cx="150" cy="380" rx="200" ry="70" fill="' + INK + '" opacity=".05"/></g>' +
-      '<rect x="' + (s.x - bz) + '" y="' + (s.y - bz + 3) + '" width="' + (s.w + bz * 2) + '" height="' + (s.h + bz * 2) + '" rx="24" fill="' + INK + '" opacity=".18"/>' +
-      '<rect x="' + (s.x - bz) + '" y="' + (s.y - bz) + '" width="' + (s.w + bz * 2) + '" height="' + (s.h + bz * 2) + '" rx="24" fill="' + c.bezel + '"/>';
+      '<rect x="' + bezel.x + '" y="' + bezel.y + '" width="' + bezel.w + '" height="' + bezel.h + '" rx="' + bezel.rx + '" fill="none" stroke="' + darken(c.button, 0.45) + '" stroke-width="4" vector-effect="non-scaling-stroke"/>' +
+      '<g style="isolation:isolate" clip-path="url(#' + uid + 'sc)">' +
+        '<rect x="' + bezel.x + '" y="' + bezel.y + '" width="' + bezel.w + '" height="' + bezel.h + '" rx="' + bezel.rx + '" fill="url(#' + uid + 'sg)"/>' +
+        '<rect x="' + bezel.x + '" y="' + bezel.y + '" width="' + bezel.w + '" height="' + bezel.h + '" rx="' + bezel.rx + '" fill="url(#' + uid + 'sm)" style="mix-blend-mode:multiply"/>' +
+      "</g>";
 
-    const b = shape.buttons;
-    b.xs.forEach(function (x) {
-      svg += '<circle cx="' + x + '" cy="' + (b.y + 4) + '" r="' + b.r + '" fill="' + INK + '" opacity=".3"/>' +
-        '<circle cx="' + x + '" cy="' + b.y + '" r="' + b.r + '" fill="' + c.button + '"/>' +
-        '<ellipse cx="' + (x - b.r * 0.3) + '" cy="' + (b.y - b.r * 0.35) + '" rx="' + (b.r * 0.38) + '" ry="' + (b.r * 0.24) + '" fill="#fff" opacity=".7"/>';
+    b.xs.forEach(function (x, i) {
+      const clip = uid + "bc" + i;
+      const cx = x, cy = b.y, r = b.r;
+      svg += '<circle cx="' + cx + '" cy="' + (cy + 4) + '" r="' + r + '" fill="' + INK + '" opacity=".3"/>' +
+        '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="' + darken(c.button, 0.45) + '" stroke-width="4" vector-effect="non-scaling-stroke"/>' +
+        '<g style="isolation:isolate">' +
+          '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="url(#' + uid + 'bg)"/>' +
+          '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="url(#' + uid + 'bm)" style="mix-blend-mode:multiply"/>' +
+          '<ellipse cx="' + (cx - r * 0.25) + '" cy="' + (cy - r * 0.3) + '" rx="' + (r * 0.7) + '" ry="' + (r * 0.55) + '" fill="url(#' + uid + 'bh)" clip-path="url(#' + clip + ')"/>' +
+        "</g>" +
+        // Inset ring: an 8px centered stroke clipped to the button leaves 4px inside.
+        '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="' + c.button + '" stroke-width="8" vector-effect="non-scaling-stroke" clip-path="url(#' + clip + ')"/>';
     });
     svg += "</svg>";
 
