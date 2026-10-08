@@ -196,7 +196,8 @@
       : complete ? pet.petName + " is all grown up and never hungry again."
       : KipCreature.statusLine(pet);
     const revives = c.revives || 0;
-    reviveCount.textContent = revives ? "Revived " + revives + (revives === 1 ? " time" : " times") : "Never revived";
+    reviveCount.textContent = revives ? "Revived " + revives + (revives === 1 ? " time" : " times") : "";
+    reviveCount.hidden = !revives;
 
     reviveActions.hidden = alive;
     completeActions.hidden = !complete;

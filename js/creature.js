@@ -244,9 +244,18 @@ const KipCreature = (function () {
     const cls = sizeClass || "creature";
     let age = (data.creature && data.creature.age) || "baby";
     if (GOAL_STAGES.indexOf(age) < 0) age = "baby";
-    const src = SPRITE_DIR + species.id + "-" + age + ".png";
+    return spriteMarkup(cls + " age-" + age + " species-" + species.id, species.id + "-" + age);
+  }
+
+  /** The unhatched egg, on the same grid as the pets. Its resting frame is the cracked shell. */
+  function eggMarkup(state) {
+    return spriteMarkup("creature lcd-egg-sprite" + (state ? " is-" + state : ""), "egg");
+  }
+
+  function spriteMarkup(cls, name) {
+    const src = SPRITE_DIR + name + ".png";
     return (
-      '<span class="' + cls + " age-" + age + " species-" + species.id + '" aria-hidden="true">' +
+      '<span class="' + cls + '" aria-hidden="true">' +
         SPRITE_SHADOW +
         '<img class="creature-face" src="' + src + '" alt="">' +
         '<img class="rest-face" src="' + src + '" alt="">' +
@@ -266,6 +275,7 @@ const KipCreature = (function () {
     isComplete,
     mood,
     statusLine,
-    petMarkup
+    petMarkup,
+    eggMarkup
   };
 })();

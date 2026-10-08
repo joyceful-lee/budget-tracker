@@ -42,20 +42,31 @@
       '<text class="pet-title-goal"><textPath href="#' + id + '-goal" startOffset="50%" text-anchor="middle"></textPath></text></svg>';
   }
 
-  function setArcText(el, name, goal) {
+  // The goal arc fits about two dozen characters at full size. Longer lines shrink a little,
+  // then the goal itself is shortened so the suffix (the progress) always shows.
+  const GOAL_FIT = 24;
+  const GOAL_MAX = 32;
+  function setArcText(el, name, goal, suffix) {
     const paths = el.querySelectorAll(".nestie-title textPath");
     paths[0].textContent = name;
-    // The goal arc only fits about two dozen characters at card size.
-    paths[1].textContent = goal.length > 24 ? goal.slice(0, 23).trim() + "…" : goal;
+    const tail = suffix || "";
+    const room = GOAL_MAX - tail.length;
+    const line = (goal.length > room ? goal.slice(0, room - 1).trim() + "…" : goal) + tail;
+    if (line.length > GOAL_FIT) paths[1].style.fontSize = (20 * GOAL_FIT / line.length).toFixed(1) + "px";
+    paths[1].textContent = line;
   }
 
   function nestieCard(pet) {
     const card = document.createElement("a");
-    card.className = "nestie-card" + (pet.creature.alive ? "" : " is-dead");
+    const complete = KipCreature.isComplete(pet);
+    const percent = Math.floor(KipFinance.progress(pet) * 100);
+    card.className = "nestie-card" + (pet.creature.alive ? "" : " is-dead") + (complete ? " is-complete" : "");
     card.href = "pet.html?id=" + encodeURIComponent(pet.id);
-    card.innerHTML = arcTitle(pet.id) + KipDevice.markup(pet.device, { screen: KipDevice.screenMarkup(pet) });
-    setArcText(card, pet.petName, "Saving for " + pet.goal.label);
-    card.setAttribute("aria-label", pet.petName + ", saving for " + pet.goal.label);
+    card.innerHTML = arcTitle(pet.id) + KipDevice.markup(pet.device, { screen: KipDevice.screenMarkup(pet) }) +
+      (complete ? '<span class="nestie-stamp" aria-hidden="true">Goal<br>met</span>' : "");
+    setArcText(card, pet.petName, (complete ? "Saved for " : "Saving for ") + pet.goal.label, " (" + percent + "%)");
+    card.setAttribute("aria-label", pet.petName + ", " + (complete ? "goal met: saved for " : "saving for ") +
+      pet.goal.label + ", " + percent + "% saved");
     return card;
   }
 
@@ -159,7 +170,7 @@
       const pet = KipStorage.findPet(KipStorage.load(), id);
       setHatchScreen(KipDevice.screenMarkup(pet));
       hatchDevice.querySelector(".lcd-pet").classList.add("is-happy");
-      hatchText.textContent = "Say hello to " + petName + ".";
+      hatchText.textContent = "Say hello to " + petName + "!";
       window.setTimeout(function () {
         window.location.href = "pet.html?id=" + encodeURIComponent(id);
       }, 1600);
@@ -217,7 +228,7 @@
       const detail = document.createElement("span");
       detail.className = "entry-date";
       detail.textContent = (pet.outcome === "complete" ? "Reached the goal" : "Released early") +
-        " and was revived " + pet.revives + (pet.revives === 1 ? " time" : " times");
+        (pet.revives ? " and was revived " + pet.revives + (pet.revives === 1 ? " time" : " times") : "");
       meta.appendChild(name);
       meta.appendChild(detail);
       const amount = document.createElement("span");

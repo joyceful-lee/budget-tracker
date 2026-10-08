@@ -75,15 +75,6 @@ const KipDevice = (function () {
       screen: { x: 72, y: 108, w: 156, h: 124 },
       buttons: { y: 280, r: 16, xs: [102, 150, 198] }
     },
-    kitty: {
-      label: "Kitty",
-      body: '<path d="M44 132 L58 40 Q62 24 76 32 L140 90 Z"/><path d="M256 132 L242 40 Q238 24 224 32 L160 90 Z"/><rect x="20" y="74" width="260" height="278" rx="88"/>',
-      extra: function (c) {
-        return '<path d="M64 104 L72 56 L112 92 Z" fill="' + c.accent + '" opacity=".75"/><path d="M236 104 L228 56 L188 92 Z" fill="' + c.accent + '" opacity=".75"/>';
-      },
-      screen: { x: 60, y: 118, w: 180, h: 132 },
-      buttons: { y: 298, r: 17, xs: [100, 150, 200] }
-    },
     capsule: {
       label: "Capsule",
       body: '<rect x="46" y="28" width="208" height="324" rx="104"/>',
@@ -119,7 +110,12 @@ const KipDevice = (function () {
   }
 
   const STAR = "M0,-6 L1.8,-1.9 6,-1.9 2.6,0.8 3.8,5 0,2.5 -3.8,5 -2.6,0.8 -6,-1.9 -1.8,-1.9Z";
-  const HEART = "M0,4 C-7,-1 -5,-7 0,-3.5 C5,-7 7,-1 0,4Z";
+  /** Status hearts are dot-matrix: lit dots for a full heart, faint unlit dots for an empty one. */
+  const HEART_DOTS = [".XX.XX.", "XXXXXXX", "XXXXXXX", ".XXXXX.", "..XXX..", "...X..."].map(function (row, y) {
+    return row.split("").map(function (c, x) {
+      return c === "X" ? '<circle cx="' + (x + 0.5) + '" cy="' + (y + 0.5) + '" r="0.42"/>' : "";
+    }).join("");
+  }).join("");
   const SPARKLE = "M0,-7 Q1,-1 7,0 Q1,1 0,7 Q-1,1 -7,0 Q-1,-1 0,-7Z";
   const BOLT = "M1.5,-8 L-4.5,1 L-0.5,1 L-2,8 L4.5,-1.5 L0.5,-1.5Z";
 
@@ -224,14 +220,14 @@ const KipDevice = (function () {
     const scene = '<div class="lcd-scene" style="' + screenStyle(pet ? pet.device : options.device) + '"><span class="lcd-motif"></span></div>';
     if (options.egg) {
       return '<div class="lcd lcd-egg">' + scene +
-        '<div class="lcd-egg-shape' + (options.eggState ? " is-" + options.eggState : "") + '"></div></div>';
+        '<div class="lcd-pet">' + KipCreature.eggMarkup(options.eggState) + "</div></div>";
     }
     const mood = KipCreature.mood(pet);
     const c = pet.creature;
     const hearts = [];
     const filled = c.alive ? Math.ceil(c.fullness / 25) : 0;
     for (let i = 0; i < 4; i++) {
-      hearts.push('<svg class="lcd-heart' + (i < filled ? " is-full" : "") + '" viewBox="-8 -8 16 14" aria-hidden="true"><path d="' + HEART + '" transform="scale(1.4)"/></svg>');
+      hearts.push('<svg class="lcd-heart' + (i < filled ? " is-full" : "") + '" viewBox="0 0 7 6" aria-hidden="true">' + HEART_DOTS + "</svg>");
     }
     const percent = Math.floor(KipFinance.progress(pet) * 100);
     return '<div class="lcd mood-' + mood + (KipCreature.isComplete(pet) ? " is-complete" : "") + '">' +
@@ -315,7 +311,6 @@ const KipDevice = (function () {
       "</g>" +
       // Inset ring: an 8px centered stroke clipped to the shell leaves 4px inside.
       '<g clip-path="url(#' + uid + 'c)" fill="none" stroke="' + c.shell + '" stroke-width="8" stroke-linejoin="round" vector-effect="non-scaling-stroke">' + shape.body + "</g>" +
-      (shape.extra ? shape.extra(c) : "") +
       '<rect x="' + bezel.x + '" y="' + bezel.y + '" width="' + bezel.w + '" height="' + bezel.h + '" rx="' + bezel.rx + '" fill="none" stroke="' + darken(c.button, 0.45) + '" stroke-width="4" vector-effect="non-scaling-stroke"/>' +
       '<g style="isolation:isolate" clip-path="url(#' + uid + 'sc)">' +
         '<rect x="' + bezel.x + '" y="' + bezel.y + '" width="' + bezel.w + '" height="' + bezel.h + '" rx="' + bezel.rx + '" fill="url(#' + uid + 'sg)"/>' +

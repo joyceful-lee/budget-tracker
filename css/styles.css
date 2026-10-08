@@ -83,11 +83,16 @@ p { margin: 0 0 1rem; }
   flex: none;
 }
 .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   margin: 0;
   font-size: 2rem;
   text-decoration: none;
   color: var(--ink);
 }
+/* Dot-matrix egg mark: lime dots with an ink face, same grid as the favicon. */
+.brand-mark { width: auto; height: 1.35em; flex: none; }
 .topbar-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: flex-end; }
 .back-link {
   display: inline-flex;
@@ -349,8 +354,8 @@ p { margin: 0 0 1rem; }
   font-size: 4.6cqw;
   line-height: 1;
 }
-.lcd-hearts { display: flex; gap: 1cqw; }
-.lcd-heart { width: 6cqw; height: auto; fill: rgba(255, 255, 255, 0.6); stroke: var(--ink); stroke-width: 1.4; }
+.lcd-hearts { display: flex; gap: 1.4cqw; }
+.lcd-heart { width: 6.4cqw; height: auto; fill: rgba(30, 26, 32, 0.18); }
 .lcd-heart.is-full { fill: #ff5a4f; }
 .lcd-percent { background: rgba(255, 255, 255, 0.75); border-radius: 1.5cqw; padding: 0.6cqw 1.4cqw; }
 .lcd-pet {
@@ -366,25 +371,12 @@ p { margin: 0 0 1rem; }
 .mood-hungry .lcd-scene { filter: saturate(0.5) brightness(0.92); }
 .mood-dead .lcd-scene { filter: grayscale(1) brightness(0.85); }
 
-.lcd-egg-shape {
-  position: absolute;
-  left: 50%;
-  bottom: 14%;
-  width: 24cqw;
-  height: 30cqw;
-  margin-left: -12cqw;
-  border: 0.9cqw solid var(--ink);
-  border-radius: 50% 50% 46% 46% / 62% 62% 38% 38%;
-  background:
-    radial-gradient(ellipse at 30% 22%, rgba(255, 255, 255, 0.9) 0 8%, transparent 25%),
-    radial-gradient(circle at 68% 56%, var(--tangerine) 0 5%, transparent 6%),
-    radial-gradient(circle at 34% 66%, var(--sky) 0 4.5%, transparent 5.5%),
-    radial-gradient(circle at 58% 80%, var(--sun) 0 4%, transparent 5%),
-    linear-gradient(110deg, #fffaf0, #f3e6c8);
-  transform-origin: 50% 90%;
-}
-.lcd-egg-shape.is-shaking { animation: egg-shake 0.35s ease-in-out infinite; }
-.lcd-egg-shape.is-cracking { animation: egg-pop 0.5s ease forwards; }
+/* The unhatched egg sits still, shakes in whole-pixel steps, then shows its crack and pops. */
+.lcd-pet .lcd-egg-sprite { animation: none; }
+.lcd-pet .lcd-egg-sprite.is-shaking { animation: egg-shake 0.3s steps(1) infinite; }
+.lcd-pet .lcd-egg-sprite.is-cracking { animation: egg-shake 0.3s steps(1), egg-pop 0.45s steps(4) 0.3s forwards; }
+.lcd-egg-sprite.is-cracking .creature-face { opacity: 0; }
+.lcd-egg-sprite.is-cracking .rest-face { opacity: 1; }
 
 /* Creature */
 .creature {
@@ -445,7 +437,7 @@ p { margin: 0 0 1rem; }
   background: var(--blue);
   padding: 1rem max(1rem, calc((100% - 1180px) / 2)) 0.5rem;
 }
-.page-gallery .brand { font-size: 1.35rem; color: rgba(255, 255, 255, 0.72); }
+.page-gallery .brand { font-size: 1.35rem; color: #fff; }
 /* Reset is destructive, so it sits apart and stays quiet until hovered. */
 .page-gallery .pill-danger {
   margin-left: 0.5rem;
@@ -521,6 +513,44 @@ p { margin: 0 0 1rem; }
 .nestie-card.is-dead .device { filter: grayscale(1); transform: rotate(-8deg); }
 .nestie-card.is-dead:hover .device, .nestie-card.is-dead:focus-visible .device { transform: translateY(-6px) rotate(-8deg); }
 .nestie-card.is-dead .pet-title-name, .nestie-card.is-dead .pet-title-goal { fill: var(--muted); }
+/* A finished Budgie sits in a burst of halftone dots with a "Goal met" stamp on its corner. */
+.nestie-card.is-complete::before {
+  content: "";
+  position: absolute;
+  left: -6%;
+  right: -6%;
+  top: 14%;
+  aspect-ratio: 1;
+  z-index: 0;
+  background: radial-gradient(circle, var(--blue) 2.2px, transparent 2.8px) 0 0 / 11px 11px;
+  -webkit-mask: radial-gradient(closest-side, #000 30%, transparent);
+          mask: radial-gradient(closest-side, #000 30%, transparent);
+  animation: complete-burst 6s ease-in-out infinite;
+  pointer-events: none;
+}
+.nestie-stamp {
+  position: absolute;
+  top: 52%;
+  right: -2%;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 4.6rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--sun);
+  border: 3px dotted var(--ink);
+  outline: 3px solid var(--sun);
+  box-shadow: 3px 3px 0 3px var(--ink);
+  font: 400 1.05rem/0.95 var(--font-display);
+  color: var(--blue-deep);
+  text-align: center;
+  text-transform: uppercase;
+  transform: rotate(12deg);
+  transition: transform 0.2s ease;
+}
+.nestie-card:hover .nestie-stamp, .nestie-card:focus-visible .nestie-stamp { transform: translateY(-6px) rotate(12deg); }
+.lcd.is-complete .lcd-percent { background: var(--sun); color: var(--blue-deep); }
 /* Cards are smaller than the pet page, so the goal line needs a bigger size to stay readable. */
 .nestie-title .pet-title-goal { font-size: 20px; }
 .nestie-new {
@@ -789,6 +819,10 @@ p { margin: 0 0 1rem; }
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: none; }
 }
+@keyframes complete-burst {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.8; }
+}
 @keyframes creature-bounce {
   0%, 100% { transform: translateY(0); }
   35% { transform: translateY(-14px) scale(1.04); }
@@ -798,8 +832,8 @@ p { margin: 0 0 1rem; }
   50% { transform: translateY(-4%); }
 }
 @keyframes egg-shake {
-  0%, 100% { transform: rotate(-6deg); }
-  50% { transform: rotate(6deg); }
+  0%, 100% { transform: translateX(-3%); }
+  50% { transform: translateX(3%); }
 }
 @keyframes egg-pop {
   from { transform: scale(1); opacity: 1; }
@@ -821,6 +855,7 @@ p { margin: 0 0 1rem; }
   .device-choice { padding: 0.4rem 0.2rem 0.3rem; }
   .field-pair { grid-template-columns: 1fr; }
   .nestie-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem 0.9rem; }
+  .nestie-stamp { width: 3.1rem; top: 60%; right: -5%; font-size: 0.72rem; border-width: 2px; outline-width: 2px; box-shadow: 2px 2px 0 2px var(--ink); }
   .memory-stages { grid-template-columns: repeat(2, minmax(90px, 1fr)); }
   .topbar { flex-wrap: wrap; }
 }

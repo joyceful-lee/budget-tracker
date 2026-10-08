@@ -234,8 +234,32 @@ const SpriteArt = (function () {
     };
   }
 
+  /*
+   * The unhatched egg, drawn straight in palette colors and sized to sit on the same
+   * ground line as the pets. Its second frame is the cracked shell shown just before hatching.
+   */
+  const EGG = "M100 56 C130 56 146 104 146 126 C146 152 126 166 100 166 C74 166 54 152 54 126 C54 104 70 56 100 56Z";
+  function spot(px, py, size, color) {
+    const u = 200 / 64;
+    return '<rect x="' + px * u + '" y="' + py * u + '" width="' + size * u + '" height="' + size * u + '" fill="' + color + '"></rect>';
+  }
+
+  function eggLayers() {
+    return {
+      body: '<defs><clipPath id="eggClip"><path d="' + EGG + '"></path></clipPath></defs>' +
+        '<path d="' + EGG + '" fill="#7c94f4"></path>' +
+        '<g clip-path="url(#eggClip)"><ellipse cx="92" cy="100" rx="44" ry="56" fill="#c9c4e8"></ellipse></g>' +
+        '<ellipse cx="78" cy="86" rx="7" ry="11" fill="#c5ffc9"></ellipse>' +
+        // Spots are squares on the 64px grid (3.125 units a pixel) so they stay crisp.
+        spot(35, 36, 4, "#fc7756") + spot(24, 41, 3, "#0ca8a4") + spot(32, 46, 3, "#e5cc21") + spot(36, 25, 3, "#e5cc21"),
+      face: "",
+      rest: '<defs><clipPath id="crackClip"><path d="' + EGG + '"></path></clipPath></defs>' +
+        '<path clip-path="url(#crackClip)" d="M56 112 L70 102 L80 116 L92 100 L104 114 L116 100 L126 114 L136 104 L146 112" fill="none" stroke="#220522" stroke-width="5" stroke-linejoin="miter"></path>'
+    };
+  }
+
   /** Ages that get a sprite; the art above also has an unused elderly stage. */
   const SPRITE_STAGES = ["baby", "teen", "adult"];
 
-  return { SPRITE_STAGES, layers };
+  return { SPRITE_STAGES, layers, eggLayers };
 })();

@@ -188,22 +188,24 @@
 
       const out = {};
       const previews = document.getElementById("previews");
+      async function build(name, art) {
+        const body = downsample(await rasterize(art.body), BODY_COVER);
+        const face = downsample(await rasterize(art.face), FACE_COVER);
+        const rest = downsample(await rasterize(art.rest), FACE_COVER);
+        out[name] = sheetDataUrl([outline(overlay(body, face)), outline(overlay(body, rest))]);
+
+        const fig = document.createElement("figure");
+        fig.className = "sheet";
+        fig.innerHTML = '<img alt="" src="' + out[name] + '"><figcaption>' + name + "</figcaption>";
+        previews.appendChild(fig);
+      }
       for (const id of Object.keys(KipStorage.SPECIES)) {
         useSpecies(id);
-        for (const age of SpriteArt.SPRITE_STAGES) {
-          const art = SpriteArt.layers(id, age);
-          const body = downsample(await rasterize(art.body), BODY_COVER);
-          const face = downsample(await rasterize(art.face), FACE_COVER);
-          const rest = downsample(await rasterize(art.rest), FACE_COVER);
-          const name = id + "-" + age;
-          out[name] = sheetDataUrl([outline(overlay(body, face)), outline(overlay(body, rest))]);
-
-          const fig = document.createElement("figure");
-          fig.className = "sheet";
-          fig.innerHTML = '<img alt="" src="' + out[name] + '"><figcaption>' + name + "</figcaption>";
-          previews.appendChild(fig);
-        }
+        for (const age of SpriteArt.SPRITE_STAGES) await build(id + "-" + age, SpriteArt.layers(id, age));
       }
+      // The egg is drawn in palette colors already, so it only needs the nearest-color pass.
+      useSpecies("");
+      await build("egg", SpriteArt.eggLayers());
       document.getElementById("out").textContent = JSON.stringify(out);
       document.getElementById("status").textContent = "Built " + Object.keys(out).length + " sprites.";
     })().catch(function (err) {
