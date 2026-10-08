@@ -488,11 +488,26 @@ p { margin: 0 0 1rem; }
   min-width: 0;
   grid-template-columns: minmax(0, 1fr);
 }
-.nestie-card .device { transition: transform 0.2s ease; }
+.nestie-card { position: relative; }
+.nestie-card .device { transition: transform 0.2s ease; width: 100%; position: relative; z-index: 1; }
 .nestie-card:hover .device, .nestie-card:focus-visible .device { transform: translateY(-6px); }
 .nestie-card:focus-visible { outline: none; }
-/* Title and device share one width, inset a little so neighbouring titles don't touch. */
-.nestie-card .device { width: 100%; }
+/* Flat oval under each Budgie, like a short ground shadow from overhead light. */
+.page-gallery .nestie-card::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  z-index: 0;
+  width: 64%;
+  height: 22px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: rgba(30, 26, 32, 0.4);
+  filter: blur(3.5px);
+  pointer-events: none;
+}
+.page-gallery .nestie-card .device-shell { filter: none; }
 /* Same curved title as the pet page, tucked down onto the device's top edge. */
 .nestie-title { width: 100%; height: auto; overflow: visible; margin-bottom: -3%; position: relative; z-index: 1; transition: transform 0.2s ease; }
 .nestie-card:hover .nestie-title, .nestie-card:focus-visible .nestie-title { transform: translateY(-6px); }
