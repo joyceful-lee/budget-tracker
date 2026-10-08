@@ -248,7 +248,7 @@
         const card = document.createElement("div");
         card.className = "memory-slot" + (memory ? " is-unlocked" : " is-locked");
         const fake = { speciesId: id, creature: { age: stage } };
-        card.innerHTML = '<div class="memory-portrait">' + KipCreature.petSvgMarkup(fake, "creature memory-creature") + "</div>" +
+        card.innerHTML = '<div class="memory-portrait">' + KipCreature.petMarkup(fake, "creature memory-creature") + "</div>" +
           "<strong>" + capitalize(stage) + "</strong><small></small>";
         card.querySelector("small").textContent = memory ? memory.petName : "Locked";
         stages.appendChild(card);

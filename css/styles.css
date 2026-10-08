@@ -388,14 +388,19 @@ p { margin: 0 0 1rem; }
 
 /* Creature */
 .creature {
+  position: relative;
+  display: block;
   width: 100%;
-  height: auto;
+  aspect-ratio: 1;
   transform-origin: 50% 85%;
 }
+/* Shadow and both sprite frames share one square; each frame shows its half of the sheet. */
+.creature > * { position: absolute; inset: 0; width: 100%; height: 100%; }
+.creature img { object-fit: cover; object-position: 0 0; image-rendering: pixelated; }
+.creature img.rest-face { object-position: 100% 0; }
 .creature.age-baby { scale: .82; }
 .creature.age-teen { scale: .92; }
 .creature.age-adult { scale: 1; }
-.creature.age-elderly { scale: 1.04; }
 .creature-shadow { fill: rgba(30, 26, 32, 0.18); }
 .rest-face { opacity: 0; transition: opacity .15s ease; }
 .creature-wrap.is-happy .creature { animation: creature-bounce 0.7s ease; }
@@ -408,8 +413,6 @@ p { margin: 0 0 1rem; }
 .growth-reveal.is-dead .creature-face { opacity: 0; }
 .creature-wrap.is-dead .rest-face,
 .growth-reveal.is-dead .rest-face { opacity: 1; }
-.creature-wrap.is-dead .rest-face text,
-.growth-reveal.is-dead .rest-face text { display: none; }
 .growth-card { text-align: center; }
 .growth-reveal { width: min(240px, 66vw); margin: 0 auto; animation: growth-pop .8s cubic-bezier(.2,.9,.3,1.2); }
 

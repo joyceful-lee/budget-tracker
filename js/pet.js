@@ -224,7 +224,7 @@
     growthTitle.textContent = completed
       ? pet.petName + " Reached Their Final Form"
       : pet.petName + " Evolved into a " + capitalize(pet.creature.age);
-    growthReveal.innerHTML = KipCreature.petSvgMarkup(pet, "creature growth-creature");
+    growthReveal.innerHTML = KipCreature.petMarkup(pet, "creature growth-creature");
     growthCopy.textContent = completed
       ? "You saved the full " + KipFinance.formatMoney(pet.goal.target) + " for " + pet.goal.label + "."
       : "You have saved half of the money for " + pet.goal.label + ".";
@@ -235,7 +235,7 @@
     const pet = currentPet();
     const expired = KipFinance.daysLeft(pet) <= 0;
     reviveTitle.textContent = pet.petName + " Has Passed Away";
-    revivePortrait.innerHTML = KipCreature.petSvgMarkup(pet, "creature growth-creature");
+    revivePortrait.innerHTML = KipCreature.petMarkup(pet, "creature growth-creature");
     reviveCopy.textContent = pet.creature.deathReason === "deadline"
       ? "The deadline arrived before " + pet.goal.label + " was fully saved, so choose a new deadline to bring " + pet.petName + " back."
       : pet.petName + " went hungry for too long.";

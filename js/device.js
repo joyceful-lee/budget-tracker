@@ -238,7 +238,7 @@ const KipDevice = (function () {
       scene +
       '<div class="lcd-status"><span class="lcd-hearts">' + hearts.join("") + '</span><span class="lcd-percent">' + percent + "%</span></div>" +
       '<div class="lcd-pet creature-wrap' + (mood === "dead" ? " is-dead" : mood === "hungry" ? " is-hungry" : "") + '">' +
-      KipCreature.petSvgMarkup(pet, "creature") + "</div></div>";
+      KipCreature.petMarkup(pet, "creature") + "</div></div>";
   }
 
   /**

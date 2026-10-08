@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Sprite Builder</title>
+  <style>
+    body { margin: 1rem; font: 14px sans-serif; background: #c9c4e8; color: #220522; }
+    .sheet { display: inline-block; margin: 0 .5rem .75rem 0; text-align: center; }
+    .sheet img { display: block; width: 256px; image-rendering: pixelated; background: #fff; }
+    #out { display: none; }
+  </style>
+</head>
+<body>
+  <p id="status">Building…</p>
+  <div id="previews"></div>
+  <pre id="out"></pre>
+
+  <script src="../js/storage.js"></script>
+  <script src="sprite-art.js"></script>
+  <script>
+    /*
+     * Turns the vector art in sprite-art.js into pixel sprites.
+     * Each sprite is a 2-frame sheet (awake | resting face), 64px per frame,
+     * every pixel snapped to the 5ugxrCrxsh palette (lospec.com/palette-list/5ugxrcrxsh)
+     * and the silhouette traced with a 1px outline in the palette's darkest color.
+     * Run tools/build-sprites.mjs to write the sheets to assets/sprites.
+     */
+    (async function () {
+      const PALETTE = ["220522", "411782", "384ec5", "0ca8a4", "a1df2a", "c5ffc9", "e5cc21", "fc7756",
+        "c93267", "8a0c7b", "dc32a6", "e183cf", "ac4cff", "5c43a9", "7c94f4", "c9c4e8"];
+      const OUTLINE = 0;
+      const GRID = 64;
+      const SUPER = 10;
+      const SIZE = GRID * SUPER;
+      /** Share of a cell the art must cover before that cell becomes a pixel. */
+      const BODY_COVER = 0.45;
+      const FACE_COVER = 0.28;
+
+      const paletteRgb = PALETTE.map(function (hex) {
+        return [0, 2, 4].map(function (i) { return parseInt(hex.slice(i, i + 2), 16); });
+      });
+      const paletteLab = paletteRgb.map(toLab);
+
+      function toLab(rgb) {
+        const lin = rgb.map(function (v) {
+          v /= 255;
+          return v > 0.04045 ? Math.pow((v + 0.055) / 1.055, 2.4) : v / 12.92;
+        });
+        const x = (lin[0] * 0.4124 + lin[1] * 0.3576 + lin[2] * 0.1805) / 0.95047;
+        const y = lin[0] * 0.2126 + lin[1] * 0.7152 + lin[2] * 0.0722;
+        const z = (lin[0] * 0.0193 + lin[1] * 0.1192 + lin[2] * 0.9505) / 1.08883;
+        const f = function (t) { return t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116; };
+        return [116 * f(y) - 16, 500 * (f(x) - f(y)), 200 * (f(y) - f(z))];
+      }
+
+      /*
+       * Hand-picked palette slots for the art's exact source colors, so each species keeps
+       * a distinct identity instead of everything pale collapsing to lavender.
+       * "*" applies to every species; anything unlisted (anti-aliased blends) uses the nearest color.
+       */
+      const RECOLOR = {
+        "*": { "#ffffff": 15, "#263b34": 0, "#35483f": 0 },
+        air: { "#fff3c8": 5, "#b7c5d3": 14, "#f4d64e": 6, "#486678": 1, "#3d596d": 1 },
+        water: { "#62a9d6": 14, "#e1f5ff": 15, "#347fae": 2 },
+        fire: { "#f0a04b": 7, "#ffe0b5": 6, "#d97706": 6, "#5d291d": 0 },
+        earth: {
+          "#909691": 14, "#898f8a": 14, "#828983": 14, "#747b75": 14,
+          "#7a827c": 13, "#717973": 13, "#656d67": 13, "#626963": 13,
+          "#3f7a45": 4, "#294e32": 0
+        },
+        metal: { "#9da9b3": 15, "#eef2f5": 5, "#596773": 13, "#43515c": 0, "#2f3d48": 0, "#f4fdff": 5,
+          "#e8a08a": 7, "#77c7b7": 3, "#f0c15a": 6 },
+        electric: { "#f4d64e": 6, "#c79210": 7, "#fff4a8": 5, "#5b4810": 0 },
+        dark: { "#645d80": 13, "#39334e": 1, "#f4eaff": 15 },
+        fairy: { "#eaa8cf": 11, "#fff0f8": 15, "#b85f95": 9, "#fff1a0": 6 },
+        money: { "#e7b73c": 6, "#8f6810": 7, "#fff1ad": 5, "#fff9cf": 5, "#6b4f16": 9 },
+        bean: { "#6aaa6e": 4, "#dff5e2": 5, "#2f6b3a": 3 },
+        drizzle: { "#7eb6d9": 14, "#e8f6ff": 15, "#4a8fb5": 2 },
+        puff: { "#a8c8e8": 15, "#f2f8ff": 5, "#6b9bc4": 3 }
+      };
+
+      let nearestCache = new Map();
+      /** Point exact source colors at their chosen palette slot for this species. */
+      function useSpecies(id) {
+        nearestCache = new Map();
+        const map = Object.assign({}, RECOLOR["*"], RECOLOR[id]);
+        Object.keys(map).forEach(function (hex) {
+          nearestCache.set(parseInt(hex.slice(1), 16), map[hex]);
+        });
+      }
+
+      function nearest(r, g, b) {
+        const key = (r << 16) | (g << 8) | b;
+        let hit = nearestCache.get(key);
+        if (hit !== undefined) return hit;
+        const lab = toLab([r, g, b]);
+        let best = 0, bestD = Infinity;
+        paletteLab.forEach(function (p, i) {
+          const d = (p[0] - lab[0]) ** 2 + (p[1] - lab[1]) ** 2 + (p[2] - lab[2]) ** 2;
+          if (d < bestD) { bestD = d; best = i; }
+        });
+        nearestCache.set(key, best);
+        return best;
+      }
+
+      /** Rasterize SVG markup drawn in a 200x200 box at SIZE x SIZE. */
+      function rasterize(markup) {
+        const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + SIZE + '" height="' + SIZE + '" viewBox="0 0 200 200">' + markup + "</svg>";
+        return new Promise(function (resolve, reject) {
+          const img = new Image();
+          img.onload = function () {
+            const canvas = document.createElement("canvas");
+            canvas.width = canvas.height = SIZE;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0);
+            resolve(ctx.getImageData(0, 0, SIZE, SIZE).data);
+          };
+          img.onerror = reject;
+          img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+        });
+      }
+
+      /** Collapse each SUPER x SUPER cell to its most common palette color, or -1 if mostly empty. */
+      function downsample(px, cover) {
+        const grid = new Int8Array(GRID * GRID).fill(-1);
+        const counts = new Uint16Array(PALETTE.length);
+        for (let gy = 0; gy < GRID; gy++) {
+          for (let gx = 0; gx < GRID; gx++) {
+            counts.fill(0);
+            let filled = 0;
+            for (let y = gy * SUPER; y < (gy + 1) * SUPER; y++) {
+              for (let x = gx * SUPER; x < (gx + 1) * SUPER; x++) {
+                const i = (y * SIZE + x) * 4;
+                if (px[i + 3] < 128) continue;
+                filled++;
+                counts[nearest(px[i], px[i + 1], px[i + 2])]++;
+              }
+            }
+            if (filled < cover * SUPER * SUPER) continue;
+            let best = 0;
+            for (let c = 1; c < counts.length; c++) if (counts[c] > counts[best]) best = c;
+            grid[gy * GRID + gx] = best;
+          }
+        }
+        return grid;
+      }
+
+      function overlay(base, top) {
+        const out = base.slice();
+        top.forEach(function (c, i) { if (c >= 0) out[i] = c; });
+        return out;
+      }
+
+      /** Ring the silhouette with a 1px outline on its empty neighbours. */
+      function outline(grid) {
+        const out = grid.slice();
+        for (let y = 0; y < GRID; y++) {
+          for (let x = 0; x < GRID; x++) {
+            if (grid[y * GRID + x] >= 0) continue;
+            const touches = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(function (d) {
+              const nx = x + d[0], ny = y + d[1];
+              return nx >= 0 && ny >= 0 && nx < GRID && ny < GRID && grid[ny * GRID + nx] >= 0;
+            });
+            if (touches) out[y * GRID + x] = OUTLINE;
+          }
+        }
+        return out;
+      }
+
+      function sheetDataUrl(frames) {
+        const canvas = document.createElement("canvas");
+        canvas.width = GRID * frames.length;
+        canvas.height = GRID;
+        const ctx = canvas.getContext("2d");
+        const img = ctx.createImageData(canvas.width, GRID);
+        frames.forEach(function (grid, f) {
+          grid.forEach(function (c, i) {
+            if (c < 0) return;
+            const x = f * GRID + (i % GRID), y = Math.floor(i / GRID);
+            const o = (y * canvas.width + x) * 4;
+            img.data.set(paletteRgb[c], o);
+            img.data[o + 3] = 255;
+          });
+        });
+        ctx.putImageData(img, 0, 0);
+        return canvas.toDataURL("image/png");
+      }
+
+      const out = {};
+      const previews = document.getElementById("previews");
+      for (const id of Object.keys(KipStorage.SPECIES)) {
+        useSpecies(id);
+        for (const age of SpriteArt.SPRITE_STAGES) {
+          const art = SpriteArt.layers(id, age);
+          const body = downsample(await rasterize(art.body), BODY_COVER);
+          const face = downsample(await rasterize(art.face), FACE_COVER);
+          const rest = downsample(await rasterize(art.rest), FACE_COVER);
+          const name = id + "-" + age;
+          out[name] = sheetDataUrl([outline(overlay(body, face)), outline(overlay(body, rest))]);
+
+          const fig = document.createElement("figure");
+          fig.className = "sheet";
+          fig.innerHTML = '<img alt="" src="' + out[name] + '"><figcaption>' + name + "</figcaption>";
+          previews.appendChild(fig);
+        }
+      }
+      document.getElementById("out").textContent = JSON.stringify(out);
+      document.getElementById("status").textContent = "Built " + Object.keys(out).length + " sprites.";
+    })().catch(function (err) {
+      document.getElementById("status").textContent = "Failed: " + err;
+    });
+  </script>
+</body>
+</html>
